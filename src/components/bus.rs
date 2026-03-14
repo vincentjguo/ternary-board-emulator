@@ -59,7 +59,7 @@ impl IOComponent<Word> for Bus {
         self.read_word()
     }
 
-    fn write(&mut self, value: Word) {
-        self.write_word(&value);
+    fn write(&mut self, value: &Word) {
+        self.write_word(value);
     }
 }

@@ -17,7 +17,7 @@ pub trait Component {
 
 pub trait IOComponent<T> {
     fn read(&mut self) -> T;
-    fn write(&mut self, value: T);
+    fn write(&mut self, value: &T);
 }
 
 pub trait BinaryWireOutputComponent: Component {
