@@ -11,7 +11,7 @@ use crate::types::{Trit, WORD_SIZE};
 /// - bus1: a (word aligned)
 /// - bus2: b (word aligned)
 /// - control: if 1, out = in1 + in2; if -1, out = in1 - in2; if 0, out = in1
-/// - c_out (wire): carry out/overflow
+/// - c_out (out): carry out/overflow
 /// - s_out (bus): sum output
 pub struct AddSub {
     bus1: Bus,
@@ -34,22 +34,22 @@ impl AddSub {
         let adder: [Adder; WORD_SIZE] = std::array::from_fn(|i| {
             let adder = Adder::new(
                 bus1.get_wire(i).clone(),
-                negate[i].wire().clone(),
+                negate[i].o_wire1().clone(),
                 carry.clone(),
             );
-            carry = adder.wire1().clone();
+            carry = adder.o_wire1().clone();
             adder
         });
         let s_out = Bus::from_wires(
             adder
                 .iter()
-                .map(|a| a.wire2().clone())
+                .map(|a| a.o_wire2().clone())
                 .collect::<Vec<Wire>>()
                 .try_into()
                 .expect("Invalid wire count for bus"),
         );
 
-        let c_out = adder[WORD_SIZE - 1].wire1().clone();
+        let c_out = adder[WORD_SIZE - 1].o_wire1().clone();
         AddSub {
             bus1,
             bus2,
@@ -75,13 +75,13 @@ impl Component for AddSub {
 }
 
 impl UnaryWireOutputComponent for AddSub {
-    fn wire(&self) -> &Wire {
+    fn o_wire1(&self) -> &Wire {
         &self.c_out
     }
 }
 
 impl UnaryBusOutputComponent for AddSub {
-    fn bus(&self) -> &Bus {
+    fn o_bus1(&self) -> &Bus {
         &self.s_out
     }
 }
@@ -95,7 +95,7 @@ mod tests {
     use crate::tools;
     use crate::types::{Word, MAX_VALUE, MIN_VALUE};
 
-    struct ALUTestCase {
+    struct AddSubTestCase {
         name: String,
         a: Word,
         b: Word,
@@ -104,7 +104,7 @@ mod tests {
         expected_overflow: Trit,
     }
 
-    fn run_alu_test(test_case: ALUTestCase) {
+    fn run_alu_test(test_case: AddSubTestCase) {
         pretty_env_logger::try_init().ok();
         // Create input buses and control wire
         let bus1 = Bus::from_word(&test_case.a);
@@ -112,12 +112,12 @@ mod tests {
         let control = wire(test_case.control);
 
         // Create and update ALU
-        let mut alu = AddSub::new(bus1, bus2, control);
-        alu.update();
+        let mut add_sub = AddSub::new(bus1, bus2, control);
+        add_sub.update();
 
         // Get outputs
-        let result_sum = alu.bus().read_word();
-        let result_overflow = read(&alu.wire());
+        let result_sum = add_sub.o_bus1().read_word();
+        let result_overflow = read(&add_sub.o_wire1());
 
         info!(
             "{}: {} + {} with control {:?} => sum: {:?}, overflow: {:?}",
@@ -147,7 +147,7 @@ mod tests {
     }
 
     #[test]
-    fn test_alu_addition() {
+    fn test_addsub_addition() {
         let mut test_cases = vec![];
 
         // Generate test cases for addition with various combinations of a and b
@@ -165,7 +165,7 @@ mod tests {
                 } else {
                     Trit::Z
                 };
-                test_cases.push(ALUTestCase {
+                test_cases.push(AddSubTestCase {
                     name: format!("Addition: {} + {}", i, j),
                     a,
                     b,
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn test_alu_subtraction() {
+    fn test_addsub_subtraction() {
         let mut test_cases = vec![];
 
         for i in [MIN_VALUE, MAX_VALUE, 0, -1, 1] {
@@ -197,7 +197,7 @@ mod tests {
                 } else {
                     Trit::Z
                 };
-                test_cases.push(ALUTestCase {
+                test_cases.push(AddSubTestCase {
                     name: format!("Subtraction: {} - {}", i, j),
                     a,
                     b,
@@ -214,14 +214,14 @@ mod tests {
     }
 
     #[test]
-    fn test_alu_passthrough() {
+    fn test_addsub_passthrough() {
         let mut test_cases = vec![];
 
         for i in MIN_VALUE..MAX_VALUE {
             let a = tools::convert_int_to_word(i);
             let b = tools::convert_int_to_word(1); // b can be anything in passthrough mode
             let expected_sum = a.clone();
-            test_cases.push(ALUTestCase {
+            test_cases.push(AddSubTestCase {
                 name: format!("Passthrough: {}", i),
                 a,
                 b, // b is ignored in passthrough mode

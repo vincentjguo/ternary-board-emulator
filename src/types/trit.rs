@@ -1,9 +1,8 @@
-use std::cmp::Ordering;
-
-pub(crate) enum Trit {
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum Trit {
     N = -1,
     Z = 0,
-    P = 1
+    P = 1,
 }
 
 impl Trit {
@@ -12,8 +11,24 @@ impl Trit {
             -1 => Trit::N,
             0 => Trit::Z,
             1 => Trit::P,
-            e => panic!("Invalid state value {}", e)
+            e => panic!("Invalid state value {}", e),
         }
+    }
+    pub fn value(&self) -> i8 {
+        match self {
+            Trit::N => -1,
+            Trit::Z => 0,
+            Trit::P => 1,
+        }
+    }
+    pub fn set_state(&mut self, other: &Trit) {
+        *self = Self::state(other.value());
+    }
+}
+
+impl Default for Trit {
+    fn default() -> Self {
+        Trit::Z
     }
 }
 
@@ -22,14 +37,7 @@ impl std::fmt::Debug for Trit {
         match self {
             Trit::N => write!(f, "-"),
             Trit::Z => write!(f, "0"),
-            Trit::P => write!(f, "+")
+            Trit::P => write!(f, "+"),
         }
-    }
-}
-
-
-impl PartialOrd for Trit {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        todo!()
     }
 }

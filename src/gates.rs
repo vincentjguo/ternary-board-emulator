@@ -1,0 +1,209 @@
+use crate::types::Trit;
+use std::cmp::{max, min};
+
+/// AND gate. The output is the minimum of the two input trits.
+pub fn and(a: &Trit, b: &Trit) -> Trit {
+    Trit::state(min(a.value(), b.value()))
+}
+
+/// OR gate. The output is the maximum of the two input trits.
+pub fn or(a: &Trit, b: &Trit) -> Trit {
+    Trit::state(max(a.value(), b.value()))
+}
+
+/// SUM gate
+pub fn add(a: &Trit, b: &Trit) -> Trit {
+    match (a, b) {
+        (Trit::N, Trit::N) => Trit::P,
+        (Trit::P, Trit::P) => Trit::N,
+        (a, b) => Trit::state(a.value() + b.value()),
+    }
+}
+
+/// NSUM gate
+pub fn nadd(a: &Trit, b: &Trit) -> Trit {
+    match (a, b) {
+        (Trit::N, Trit::N) => Trit::N,
+        (Trit::P, Trit::P) => Trit::P,
+        (a, b) => Trit::state(-(a.value() + b.value())),
+    }
+}
+
+/// CONSENSUS gate
+pub fn cons(a: &Trit, b: &Trit) -> Trit {
+    match (a, b) {
+        (Trit::N, Trit::N) => Trit::N,
+        (Trit::P, Trit::P) => Trit::P,
+        _ => Trit::Z,
+    }
+}
+
+/// ANY gate
+pub fn any(a: &Trit, b: &Trit) -> Trit {
+    match (a, b) {
+        (Trit::N, Trit::P) | (Trit::P, Trit::N) => Trit::Z,
+        (Trit::N, _) | (_, Trit::N) => Trit::N,
+        (Trit::P, _) | (_, Trit::P) => Trit::P,
+        _ => Trit::Z,
+    }
+}
+
+/// MULTIPLICATION gate
+pub fn mul(a: &Trit, b: &Trit) -> Trit {
+    Trit::state(a.value() * b.value())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::gates;
+    use crate::types::Trit;
+
+    #[derive(Debug)]
+    struct GateCase {
+        input: Vec<Trit>,
+        expected: Vec<Trit>,
+    }
+
+    fn trits(values: &[i8]) -> Vec<Trit> {
+        values.iter().map(|value| Trit::state(*value)).collect()
+    }
+
+    fn case(input: &[i8], expected: &[i8]) -> GateCase {
+        GateCase {
+            input: trits(input),
+            expected: trits(expected),
+        }
+    }
+
+    fn run_cases<F>(gate_name: &str, gate: F, cases: &[GateCase])
+    where
+        F: Fn(&[Trit]) -> Vec<Trit>,
+    {
+        for (index, test_case) in cases.iter().enumerate() {
+            let actual = gate(&test_case.input);
+            assert_eq!(
+                actual, test_case.expected,
+                "{gate_name} failed at case #{index}: input={:?}",
+                test_case.input
+            );
+        }
+    }
+
+    fn run_binary_cases(gate_name: &str, gate: fn(&Trit, &Trit) -> Trit, cases: &[GateCase]) {
+        run_cases(
+            gate_name,
+            |input| {
+                assert_eq!(
+                    input.len(),
+                    2,
+                    "{gate_name} expects 2 input trits, got {}",
+                    input.len()
+                );
+                vec![gate(&input[0], &input[1])]
+            },
+            cases,
+        );
+    }
+
+    #[test]
+    fn and_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[-1]),
+            case(&[-1, 0], &[-1]),
+            case(&[-1, 1], &[-1]),
+            case(&[0, -1], &[-1]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[0]),
+            case(&[1, -1], &[-1]),
+            case(&[1, 0], &[0]),
+            case(&[1, 1], &[1]),
+        ];
+
+        run_binary_cases("and", gates::and, &cases);
+    }
+
+    #[test]
+    fn sum_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[1]),
+            case(&[-1, 0], &[-1]),
+            case(&[-1, 1], &[0]),
+            case(&[0, -1], &[-1]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[1]),
+            case(&[1, -1], &[0]),
+            case(&[1, 0], &[1]),
+            case(&[1, 1], &[-1]),
+        ];
+
+        run_binary_cases("sum", gates::add, &cases);
+    }
+
+    #[test]
+    fn nsum_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[-1]),
+            case(&[-1, 0], &[1]),
+            case(&[-1, 1], &[0]),
+            case(&[0, -1], &[1]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[-1]),
+            case(&[1, -1], &[0]),
+            case(&[1, 0], &[-1]),
+            case(&[1, 1], &[1]),
+        ];
+
+        run_binary_cases("nsum", gates::nadd, &cases);
+    }
+
+    #[test]
+    fn cons_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[-1]),
+            case(&[-1, 0], &[0]),
+            case(&[-1, 1], &[0]),
+            case(&[0, -1], &[0]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[0]),
+            case(&[1, -1], &[0]),
+            case(&[1, 0], &[0]),
+            case(&[1, 1], &[1]),
+        ];
+
+        run_binary_cases("cons", gates::cons, &cases);
+    }
+
+    #[test]
+    fn any_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[-1]),
+            case(&[-1, 0], &[-1]),
+            case(&[-1, 1], &[0]),
+            case(&[0, -1], &[-1]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[1]),
+            case(&[1, -1], &[0]),
+            case(&[1, 0], &[1]),
+            case(&[1, 1], &[1]),
+        ];
+
+        run_binary_cases("any", gates::any, &cases);
+    }
+
+    #[test]
+    fn mul_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[1]),
+            case(&[-1, 0], &[0]),
+            case(&[-1, 1], &[-1]),
+            case(&[0, -1], &[0]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[0]),
+            case(&[1, -1], &[-1]),
+            case(&[1, 0], &[0]),
+            case(&[1, 1], &[1]),
+        ];
+
+        run_binary_cases("mul", gates::mul, &cases);
+    }
+}
