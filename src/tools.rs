@@ -47,3 +47,21 @@ pub fn convert_word_to_int(word: &Word) -> i32 {
     }
     value
 }
+
+pub fn convert_int_to_unbiased_unbalanced(value: i32) -> Vec<i8> {
+    let mut trits: Vec<i8> = Vec::new();
+    let mut val = value;
+
+    while val != 0 {
+        trits.push((val % 3) as i8);
+        val /= 3;
+    }
+    trits
+}
+
+pub fn convert_int_to_unsigned_word(value: i32) -> Word {
+    if value < 0 || value > MAX_VALUE {
+        panic!("Value out of range: {}. Must be between 0 and {}.", value, MAX_VALUE * 2);
+    }
+    convert_unbalanced_to_word(&convert_int_to_unbiased_unbalanced(value))
+}

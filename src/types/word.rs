@@ -28,6 +28,10 @@ impl Word {
     pub fn get_trits(&self) -> &[Trit; WORD_SIZE] {
         &self.trits
     }
+    
+    pub fn get_trit(&self, i: usize) -> &Trit {
+        &self.trits[i]
+    }
 
     pub fn set_trit(&mut self, i: usize, value: &Trit) {
         self.trits[i].set_state(value);
