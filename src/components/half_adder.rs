@@ -1,6 +1,7 @@
+use std::fmt::Debug;
 use crate::components::wire::{Wire, read, wire, write};
 use crate::components::{BinaryWireOutputComponent, Component};
-use crate::gates::{cons, add};
+use crate::binary_functions::{cons, add};
 use crate::types::Trit;
 
 /// Half Adder component.
@@ -38,6 +39,7 @@ impl Component for HalfAdder {
         write(&self.c_out, &c_out);
     }
 }
+
 impl BinaryWireOutputComponent for HalfAdder {
     fn o_wire1(&self) -> &Wire {
         &self.c_out
@@ -48,6 +50,21 @@ impl BinaryWireOutputComponent for HalfAdder {
     }
 }
 
+impl Debug for HalfAdder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let a = read(&self.in1);
+        let b = read(&self.in2);
+        let sum = read(&self.sum_out);
+        let c_out = read(&self.c_out);
+        write!(
+            f,
+            "HalfAdder {{ in1: {:?}, in2: {:?}, sum_out: {:?}, c_out: {:?} }}",
+            a, b, sum, c_out
+        )
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use crate::components::half_adder::HalfAdder;
     use crate::components::wire::{read, wire, write};
@@ -133,7 +150,7 @@ mod tests {
 
         // -1 + 1 = 0
         write(&in1, &Trit::N);
-        write(&in2, &&Trit::P);
+        write(&in2, &Trit::P);
         ha.update();
         assert_eq!(read(ha.o_wire1()), Trit::Z);
     }
@@ -161,7 +178,7 @@ mod tests {
         let mut ha = HalfAdder::new(in1.clone(), in2.clone());
 
         // 1 + 1 = -1 with carry +1
-        write(&in1, &&Trit::P);
+        write(&in1, &Trit::P);
         write(&in2, &Trit::P);
         ha.update();
         assert_eq!(read(ha.o_wire1()), Trit::P);
@@ -176,7 +193,7 @@ mod tests {
         let mut ha = HalfAdder::new(in1.clone(), in2.clone());
 
         // -1 + -1 = 1 with carry -1
-        write(&in1, &&Trit::N);
+        write(&in1, &Trit::N);
         write(&in2, &Trit::N);
         ha.update();
         assert_eq!(read(ha.o_wire1()), Trit::N);

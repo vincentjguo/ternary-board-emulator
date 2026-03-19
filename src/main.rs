@@ -1,5 +1,5 @@
 mod components;
-mod gates;
+mod binary_functions;
 mod types;
 mod tools;
 

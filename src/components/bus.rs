@@ -1,7 +1,7 @@
-use std::fmt::Debug;
 use crate::components::IOComponent;
-use crate::components::wire::{read, wire, write, Wire};
-use crate::types::{Trit, Word, WORD_SIZE};
+use crate::components::wire::{Wire, read, wire, write};
+use crate::types::{Trit, WORD_SIZE, Word};
+use std::fmt::Debug;
 
 #[derive(Clone)]
 pub struct Bus([Wire; WORD_SIZE]);
@@ -20,7 +20,7 @@ impl Bus {
     pub fn from_wires(wires: [Wire; WORD_SIZE]) -> Self {
         Bus(wires)
     }
-    
+
     pub fn get_wire(&self, i: usize) -> &Wire {
         &self.0[i]
     }
@@ -29,10 +29,10 @@ impl Bus {
         read(&self.0[i])
     }
 
-    pub fn write_trit(&self, values: Trit, i: usize) {
+    pub fn write_trit(&self, i: usize, values: Trit) {
         write(&self.0[i], &values);
     }
-    
+
     pub fn write_word(&self, word: &Word) {
         let trits = word.get_trits();
         for i in 0..WORD_SIZE {

@@ -1,6 +1,7 @@
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub enum Trit {
     N = -1,
+    #[default]
     Z = 0,
     P = 1,
 }
@@ -26,11 +27,6 @@ impl Trit {
     }
 }
 
-impl Default for Trit {
-    fn default() -> Self {
-        Trit::Z
-    }
-}
 
 impl std::fmt::Debug for Trit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

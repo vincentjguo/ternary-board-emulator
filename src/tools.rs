@@ -14,7 +14,7 @@ pub fn convert_int_to_unbalanced(value: i32) -> Vec<i8> {
 }
 
 pub fn convert_unbalanced_to_word(unbalanced: &Vec<i8>) -> Word {
-    if (unbalanced.len() > WORD_SIZE) {
+    if unbalanced.len() > WORD_SIZE {
         panic!("Unbalanced trit vector too long: {}. Must be at most {}.", unbalanced.len(), WORD_SIZE);
     }
     let mut word: Word = Word::new();

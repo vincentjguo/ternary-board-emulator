@@ -1,6 +1,8 @@
 use crate::types::Trit;
 use std::cmp::{max, min};
 
+pub type BinaryFunction = fn(&Trit, &Trit) -> Trit;
+
 /// AND gate. The output is the minimum of the two input trits.
 pub fn and(a: &Trit, b: &Trit) -> Trit {
     Trit::state(min(a.value(), b.value()))
@@ -55,7 +57,7 @@ pub fn mul(a: &Trit, b: &Trit) -> Trit {
 
 #[cfg(test)]
 mod tests {
-    use crate::gates;
+    use crate::binary_functions;
     use crate::types::Trit;
 
     #[derive(Debug)]
@@ -119,7 +121,7 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("and", gates::and, &cases);
+        run_binary_cases("and", binary_functions::and, &cases);
     }
 
     #[test]
@@ -136,7 +138,7 @@ mod tests {
             case(&[1, 1], &[-1]),
         ];
 
-        run_binary_cases("sum", gates::add, &cases);
+        run_binary_cases("sum", binary_functions::add, &cases);
     }
 
     #[test]
@@ -153,7 +155,7 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("nsum", gates::nadd, &cases);
+        run_binary_cases("nsum", binary_functions::nadd, &cases);
     }
 
     #[test]
@@ -170,7 +172,7 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("cons", gates::cons, &cases);
+        run_binary_cases("cons", binary_functions::cons, &cases);
     }
 
     #[test]
@@ -187,7 +189,7 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("any", gates::any, &cases);
+        run_binary_cases("any", binary_functions::any, &cases);
     }
 
     #[test]
@@ -204,6 +206,6 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("mul", gates::mul, &cases);
+        run_binary_cases("mul", binary_functions::mul, &cases);
     }
 }

@@ -8,7 +8,7 @@ mod mux;
 pub mod fblock;
 pub mod binary_gate;
 pub mod alu;
-pub mod shifter_rotator;
+pub mod shifter;
 
 pub trait Component {
     /// read from wires and compute outputs

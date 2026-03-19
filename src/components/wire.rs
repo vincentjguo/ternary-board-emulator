@@ -1,7 +1,7 @@
-use crate::types::Trit;
-use std::cell::{Ref, RefCell};
-use std::rc::Rc;
 use crate::components::IOComponent;
+use crate::types::Trit;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub type Wire = Rc<RefCell<Trit>>;
 

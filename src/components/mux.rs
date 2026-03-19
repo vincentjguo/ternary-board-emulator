@@ -1,114 +1,134 @@
-use std::fmt::Debug;
 use crate::components::bus::Bus;
-use crate::components::wire::{Wire, read, write};
-use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
+use crate::components::wire::{read, write, Wire};
+use crate::components::{Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
+use std::fmt::Debug;
 
 /// Multiplexer component.
 /// - select: control lines to select which input to output. 0 index least significant digit in unbalanced ternary
 /// - inputs: list of input buses. The number of inputs should be less than or equal to 3^select.len()
 ///
-/// TODO: refactor to combine trit and bus mux logic
-pub struct Mux {
-    select: Vec<Wire>,
-    inputs: Vec<Bus>,
+fn selected_index(select: &[Wire], bias: i32) -> usize {
+    let signed = select .iter()
+        .enumerate()
+        .fold(0_i32, |acc, (i, wire)| {
+            acc + read(wire).value() as i32 *3_i32.pow(i as u32)
+        })
+        + bias;
+    signed as usize}
 
-    output: Bus,
-    bias: i32
+pub(crate) trait MuxSignal: Clone {
+    fn copy_to_output(src: &Self, dst: &Self);
 }
 
-impl Mux {
-    pub fn new(select: Vec<Wire>, inputs: Vec<Bus>, output: Bus) -> Self {
-        let max_inputs = 3usize.pow(select.len() as u32);
+impl MuxSignal for Bus {
+    fn copy_to_output(src: &Self, dst: &Self) {
+        dst.write_word(&src.read_word());
+    }
+}
+
+impl MuxSignal for Wire {
+    fn copy_to_output(src: &Self, dst: &Self) {
+        write(dst, &read(src));
+    }
+}
+
+pub struct SelectMux<T: MuxSignal> {
+    select: Vec<Wire>,
+    inputs: Vec<T>,
+    output: T,
+    bias: i32,
+}
+
+impl<T: MuxSignal> SelectMux<T> {
+    pub fn new(select: Vec<Wire>, inputs: Vec<T>, output: T) -> Self {
+        let max_inputs =3usize.pow(select.len() as u32);
         assert!(
             max_inputs >= inputs.len(),
-            "select lines ({}) do not cover all inputs ({})", max_inputs, inputs.len()
+            "select lines ({}) do not cover all inputs ({})",
+            max_inputs,
+            inputs.len()
         );
 
         Self {
             select,
             inputs,
             output,
-            bias: max_inputs as i32 / 2, // Bias to convert from signed to unsigned index
+            bias: max_inputs as i32 /2,
         }
     }
 }
 
-impl Component for Mux {
+impl<T: MuxSignal> Component for SelectMux<T> {
     fn update(&mut self) {
-        let selected = self
-            .select
-            .iter()
-            .enumerate()
-            .fold(0, |acc: i32, (i, wire)| {
-                acc + read(wire).value() as i32 * (3i32.pow(i as u32))
-            }) + self.bias;
-        self.output
-            .write_word(&self.inputs[selected as usize].read_word());
+        let idx = selected_index(&self.select, self.bias);
+        assert!(
+            idx < self.inputs.len(),
+            "selected input index ({}) is not connected (inputs: {})",
+            idx,
+            self.inputs.len()
+        );
+        T::copy_to_output(&self.inputs[idx], &self.output);
     }
 }
 
-impl UnaryBusOutputComponent for Mux {
+/// Specific mux for bus inputs/outputs
+pub type Mux = SelectMux<Bus>;
+
+impl UnaryBusOutputComponent for SelectMux<Bus> {
     fn o_bus1(&self) -> &Bus {
+        &self.output }
+}
+
+impl Debug for SelectMux<Bus> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let idx = selected_index(&self.select, self.bias);
+        let out = if idx < self.inputs.len() {
+            self.inputs[idx].read_word()
+        } else {
+            // If index is not connected, show current physical output bus state.
+            self.output.read_word()
+        };
+
+        write!(
+            f,
+            "Mux {{ select: {:?}, output: {:?} }}",
+            self.select.iter().map(read).collect::<Vec<_>>(),
+            out )
+    }
+}
+
+/// Specific mux for a single trit input/output
+pub type TritMux = SelectMux<Wire>;
+
+impl UnaryWireOutputComponent for SelectMux<Wire> {
+    fn o_wire1(&self) -> &Wire {
         &self.output
     }
 }
 
-pub struct TritMux {
-    select: Vec<Wire>,
-    inputs: Vec<Wire>,
-
-    output: Wire,
-    bias: i32
-}
-
-impl TritMux {
-    pub fn new(select: Vec<Wire>, inputs: Vec<Wire>, output: Wire) -> Self {
-        let max_inputs = 3usize.pow(select.len() as u32);
-        assert!(
-            max_inputs >= inputs.len(),
-            "select lines ({}) do not cover all inputs ({})", max_inputs, inputs.len()
-        );
-
-        Self {
-            select,
-            inputs,
-            output,
-            bias: max_inputs as i32 / 2, // Bias to convert from signed to unsigned index
-        }
-    }
-}
-
-impl Component for TritMux {
-    fn update(&mut self) {
-        let selected = self
-            .select
-            .iter()
-            .enumerate()
-            .fold(0, |acc: i32, (i, wire)| {
-                acc + read(wire).value() as i32 * (3i32.pow(i as u32))
-            }) + self.bias;
-        write(&self.output, &read(&self.inputs[selected as usize]));
-    }
-}
-
-impl Debug for TritMux {
+impl Debug for SelectMux<Wire> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let selected = self
-            .select
-            .iter()
-            .enumerate()
-            .fold(0, |acc: i32, (i, wire)| {
-                acc + read(wire).value() as i32 * (3i32.pow(i as u32))
-            }) + self.bias;
-        write!(f, "TritMux {{ select: {:?}, output: {:?} }}", self.select.iter().map(|w| read(w)).collect::<Vec<_>>(), read(&self.inputs[selected as usize]))
+        let idx = selected_index(&self.select, self.bias);
+        let out = if idx < self.inputs.len() {
+            read(&self.inputs[idx])
+        } else {
+            // If index is not connected, show current physical output wire state.
+            read(&self.output)
+        };
+
+        write!(
+            f,
+            "TritMux {{ select: {:?}, output: {:?} }}",
+            self.select.iter().map(read).collect::<Vec<_>>(),
+            out )
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use crate::components::mux::{Mux, TritMux};
-    use crate::components::wire::{read, write};
+    use crate::components::mux::Mux;
+    use crate::components::wire::write;
     use crate::components::{Component, UnaryBusOutputComponent};
-    use crate::tools::convert_int_to_word;
     use crate::types::Trit;
 
     #[test]

@@ -1,7 +1,8 @@
+use std::fmt::Debug;
 use crate::components::adder::Adder;
 use crate::components::bus::Bus;
 use crate::components::negate::Negate;
-use crate::components::wire::{Wire, wire};
+use crate::components::wire::{Wire, wire, read};
 use crate::components::{
     BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent,
 };
@@ -27,8 +28,7 @@ pub struct AddSub {
 impl AddSub {
     pub fn new(bus1: Bus, bus2: Bus, control: Wire) -> Self {
         let negate: [Negate; WORD_SIZE] = std::array::from_fn(|i| {
-            let negate = Negate::new(bus2.get_wire(i).clone(), control.clone());
-            negate
+            Negate::new(bus2.get_wire(i).clone(), control.clone())
         });
         let mut carry = wire(Trit::default());
         let adder: [Adder; WORD_SIZE] = std::array::from_fn(|i| {
@@ -86,10 +86,26 @@ impl UnaryBusOutputComponent for AddSub {
     }
 }
 
+impl Debug for AddSub {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let a = self.bus1.read_word();
+        let b = self.bus2.read_word();
+        let control = read(&self.control);
+        let sum = self.s_out.read_word();
+        let c_out = read(&self.c_out);
+        write!(
+            f,
+            "AddSub {{ bus1: {:?}, bus2: {:?}, control: {:?}, sum_out: {:?}, c_out: {:?} }}",
+            a, b, control, sum, c_out
+        )
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use std::cmp::{max, min};
-    use log::{info};
-    use rand::random;
+    use log::{debug};
+
     use super::*;
     use crate::components::wire::{read};
     use crate::tools;
@@ -117,9 +133,9 @@ mod tests {
 
         // Get outputs
         let result_sum = add_sub.o_bus1().read_word();
-        let result_overflow = read(&add_sub.o_wire1());
+        let result_overflow = read(add_sub.o_wire1());
 
-        info!(
+        debug!(
             "{}: {} + {} with control {:?} => sum: {:?}, overflow: {:?}",
             test_case.name,
             tools::convert_word_to_int(&test_case.a),
@@ -143,7 +159,7 @@ mod tests {
             );
         }
 
-        info!("=> OK")
+        debug!("=> OK")
     }
 
     #[test]
@@ -157,7 +173,7 @@ mod tests {
             for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
                 let a = tools::convert_int_to_word(i);
                 let b = tools::convert_int_to_word(j);
-                let expected_sum = tools::convert_int_to_word((i + j).min(MAX_VALUE).max(MIN_VALUE));
+                let expected_sum = tools::convert_int_to_word((i + j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i + j < MIN_VALUE {
                     Trit::N
                 } else if i + j > MAX_VALUE {
@@ -189,7 +205,7 @@ mod tests {
             for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
                 let a = tools::convert_int_to_word(i);
                 let b = tools::convert_int_to_word(j);
-                let expected_sum = tools::convert_int_to_word((i - j).min(MAX_VALUE).max(MIN_VALUE));
+                let expected_sum = tools::convert_int_to_word((i - j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i - j < MIN_VALUE {
                     Trit::N
                 } else if i - j > MAX_VALUE {
