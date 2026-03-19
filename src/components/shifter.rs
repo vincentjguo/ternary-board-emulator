@@ -11,7 +11,7 @@ use std::fmt::Debug;
 /// - bus1: input word (word aligned)
 /// - c1, c2, c3: control wires for shift amount (0 to 8)
 /// - c4: control wire for shift direction (0 for left shift, 1 for right shift)
-struct Shifter {
+pub struct Shifter {
     bus1: Bus,
 
     c1: Wire,
@@ -32,10 +32,6 @@ impl Shifter {
     //noinspection DuplicatedCode
     //noinspection DuplicatedCode
     pub fn new(bus1: Bus, c1: Wire, c2: Wire, c3: Wire) -> Self {
-        let pre_invert_out = Bus::new();
-        let stage1_out = Bus::new();
-        let stage2_out = Bus::new();
-        let out = Bus::new();
         let mut pre_inv = Vec::new();
         let mut post_inv = Vec::new();
         let mut stage1 = Vec::new();
@@ -50,18 +46,17 @@ impl Shifter {
                 vec![
                     bus1.get_wire(i).clone(),
                     bus1.get_wire(WORD_SIZE - 1 - i).clone(),
-                ],
-                pre_invert_out.get_wire(i).clone(),
+                ]
             ));
         }
 
         // shifter
         macro_rules! link_shift_wires {
-            ($i:expr, $bus:expr, $shift:expr) => {
+            ($i:expr, $muxes:expr, $shift:expr) => {
                 if $i < $shift {
                     _zero_wire.clone()
                 } else {
-                    $bus.get_wire($i - $shift).clone()
+                    $muxes[$i - $shift].o_wire1().clone()
                 }
             };
         }
@@ -69,20 +64,18 @@ impl Shifter {
             stage1.push(TritMux::new(
                 vec![c1.clone()],
                 vec![
-                    pre_invert_out.get_wire(i).clone(),
-                    link_shift_wires!(i, pre_invert_out, 1),
-                    link_shift_wires!(i, pre_invert_out, 2),
-                ],
-                stage1_out.get_wire(i).clone(),
+                    pre_inv[i].o_wire1().clone(),
+                    link_shift_wires!(i, pre_inv, 1),
+                    link_shift_wires!(i, pre_inv, 2),
+                ]
             ));
             stage2.push(TritMux::new(
                 vec![c2.clone()],
                 vec![
-                    stage1_out.get_wire(i).clone(),
-                    link_shift_wires!(i, stage1_out, 3),
-                    link_shift_wires!(i, stage1_out, 6),
+                    stage1[i].o_wire1().clone(),
+                    link_shift_wires!(i, stage1, 3),
+                    link_shift_wires!(i, stage1, 6),
                 ],
-                stage2_out.get_wire(i).clone(),
             ));
         }
 
@@ -91,12 +84,20 @@ impl Shifter {
             post_inv.push(TritMux::new(
                 vec![c3.clone()],
                 vec![
-                    stage2_out.get_wire(i).clone(),
-                    stage2_out.get_wire(WORD_SIZE - 1 - i).clone(),
-                ],
-                out.get_wire(i).clone(),
+                    stage2[i].o_wire1().clone(),
+                    stage2[WORD_SIZE - 1 - i].o_wire1().clone(),
+                ]
             ));
         }
+        
+        let out = Bus::from_wires(
+            post_inv
+                .iter()
+                .map(|mux| mux.o_wire1().clone())
+                .collect::<Vec<Wire>>()
+                .try_into()
+                .expect("Invalid wire count for bus"),
+        );
 
         Shifter {
             bus1,

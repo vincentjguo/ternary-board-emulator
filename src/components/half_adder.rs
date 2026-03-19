@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use crate::components::wire::{Wire, read, wire, write};
 use crate::components::{BinaryWireOutputComponent, Component};
-use crate::binary_functions::{cons, add};
+use crate::binary_functions::{cons, sum};
 use crate::types::Trit;
 
 /// Half Adder component.
@@ -32,7 +32,7 @@ impl Component for HalfAdder {
         let a = read(&self.in1);
         let b = read(&self.in2);
 
-        let sum = add(&a, &b);
+        let sum = sum(&a, &b);
         let c_out = cons(&a, &b);
 
         write(&self.sum_out, &sum);

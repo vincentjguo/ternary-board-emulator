@@ -3,7 +3,7 @@ use crate::components::binary_gate::BinaryGate;
 use crate::components::bus::Bus;
 use crate::components::mux::Mux;
 use crate::components::wire::Wire;
-use crate::binary_functions::{add, and, any, cons, mul, or};
+use crate::binary_functions::{sum, and, any, cons, xor, or};
 use crate::types::Trit;
 use std::fmt::Debug;
 
@@ -21,12 +21,13 @@ pub struct FBlock {
     functions: Vec<BinaryGate>,
 }
 
-const FUNCTIONS: [fn(&Trit, &Trit) -> Trit; 6] = [and, or, cons, any, add, mul];
+const FUNCTIONS: [fn(&Trit, &Trit) -> Trit; 6] = [and, or, cons, any, sum, xor];
 
 impl FBlock {
-    pub fn new(in1: Bus, in2: Bus, out: Bus, select: [Wire; 2]) -> Self {
+    pub fn new(in1: Bus, in2: Bus, select: [Wire; 2]) -> Self {
         let mut functions = Vec::new();
         let mut mux_inputs = Vec::new();
+
         for func in FUNCTIONS.iter() {
             let output = Bus::new();
             let gate = BinaryGate::new(
@@ -40,11 +41,13 @@ impl FBlock {
             mux_inputs.push(output);
         }
 
+        let mux = Mux::new(select.to_vec(), mux_inputs);
+
         FBlock {
             in1,
             in2,
-            out: out.clone(),
-            mux: Mux::new(select.to_vec(), mux_inputs, out.clone()),
+            out: mux.o_bus1().clone(),
+            mux,
             select,
             functions,
         }
@@ -97,7 +100,6 @@ mod tests {
 
         let in1 = Bus::new();
         let in2 = Bus::new();
-        let out = Bus::new();
 
         let s0 = Wire::default();
         let s1 = Wire::default();
@@ -105,7 +107,6 @@ mod tests {
         let mut fblock = FBlock::new(
             in1.clone(),
             in2.clone(),
-            out.clone(),
             [s0.clone(), s1.clone()],
         );
 
@@ -136,15 +137,18 @@ mod tests {
                     write(&s1, select.get_trit(1));
                     fblock.update();
 
+                    let out = fblock.o_bus1();
+
                     assert_eq!(
                         out.read_word(),
                         expected,
-                        "Function: {:?}, Expected: {}, Got: {} for inputs a: {:?}, b: {:?}",
-                        FUNCTIONS[func_idx],
+                        "Function: {:?}, Expected: {}, Got: {} for inputs a: {:?}, b: {:?}, state: {:?}",
+                        func_idx,
                         expected,
                         out.read_word(),
                         a,
-                        b
+                        b,
+                        fblock
                     );
                 }
             }

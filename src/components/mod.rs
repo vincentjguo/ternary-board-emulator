@@ -9,6 +9,7 @@ pub mod fblock;
 pub mod binary_gate;
 pub mod alu;
 pub mod shifter;
+pub mod opcode_decoder;
 
 pub trait Component {
     /// read from wires and compute outputs

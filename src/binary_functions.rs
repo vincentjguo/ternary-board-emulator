@@ -1,7 +1,10 @@
 use crate::types::Trit;
 use std::cmp::{max, min};
-
+/// A binary function takes two trits as input and produces a single trit as output.
 pub type BinaryFunction = fn(&Trit, &Trit) -> Trit;
+
+
+// gates from https://louis-dr.github.io/ternalu3.html
 
 /// AND gate. The output is the minimum of the two input trits.
 pub fn and(a: &Trit, b: &Trit) -> Trit {
@@ -13,8 +16,9 @@ pub fn or(a: &Trit, b: &Trit) -> Trit {
     Trit::state(max(a.value(), b.value()))
 }
 
+
 /// SUM gate
-pub fn add(a: &Trit, b: &Trit) -> Trit {
+pub fn sum(a: &Trit, b: &Trit) -> Trit {
     match (a, b) {
         (Trit::N, Trit::N) => Trit::P,
         (Trit::P, Trit::P) => Trit::N,
@@ -23,7 +27,7 @@ pub fn add(a: &Trit, b: &Trit) -> Trit {
 }
 
 /// NSUM gate
-pub fn nadd(a: &Trit, b: &Trit) -> Trit {
+pub fn nsum(a: &Trit, b: &Trit) -> Trit {
     match (a, b) {
         (Trit::N, Trit::N) => Trit::N,
         (Trit::P, Trit::P) => Trit::P,
@@ -50,8 +54,8 @@ pub fn any(a: &Trit, b: &Trit) -> Trit {
     }
 }
 
-/// MULTIPLICATION gate
-pub fn mul(a: &Trit, b: &Trit) -> Trit {
+/// XOR/MULTIPLICATION gate
+pub fn xor(a: &Trit, b: &Trit) -> Trit {
     Trit::state(a.value() * b.value())
 }
 
@@ -138,7 +142,7 @@ mod tests {
             case(&[1, 1], &[-1]),
         ];
 
-        run_binary_cases("sum", binary_functions::add, &cases);
+        run_binary_cases("sum", binary_functions::sum, &cases);
     }
 
     #[test]
@@ -155,7 +159,7 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("nsum", binary_functions::nadd, &cases);
+        run_binary_cases("nsum", binary_functions::nsum, &cases);
     }
 
     #[test]
@@ -206,6 +210,6 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("mul", binary_functions::mul, &cases);
+        run_binary_cases("mul", binary_functions::xor, &cases);
     }
 }

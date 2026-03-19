@@ -120,7 +120,7 @@ mod tests {
         expected_overflow: Trit,
     }
 
-    fn run_alu_test(test_case: AddSubTestCase) {
+    fn run_addsub_test(test_case: AddSubTestCase) {
         pretty_env_logger::try_init().ok();
         // Create input buses and control wire
         let bus1 = Bus::from_word(&test_case.a);
@@ -193,7 +193,7 @@ mod tests {
         }
 
         for test_case in test_cases {
-            run_alu_test(test_case);
+            run_addsub_test(test_case);
         }
     }
 
@@ -225,7 +225,7 @@ mod tests {
         }
 
         for test_case in test_cases {
-            run_alu_test(test_case);
+            run_addsub_test(test_case);
         }
     }
 
@@ -248,7 +248,7 @@ mod tests {
         }
 
         for test_case in test_cases {
-            run_alu_test(test_case);
+            run_addsub_test(test_case);
         }
     }
 }

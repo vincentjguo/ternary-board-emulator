@@ -1,6 +1,6 @@
 use crate::components::wire::{read, write, Wire};
 use crate::components::{Component, UnaryWireOutputComponent};
-use crate::binary_functions::mul;
+use crate::binary_functions::xor;
 use std::fmt::Debug;
 
 /// Negate component.
@@ -24,7 +24,7 @@ impl Component for Negate {
         let control = read(&self.control);
 
 
-        write(&self.out, &mul(&a, &control));
+        write(&self.out, &xor(&a, &control));
     }
 }
 

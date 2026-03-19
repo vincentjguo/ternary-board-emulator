@@ -18,17 +18,24 @@ fn selected_index(select: &[Wire], bias: i32) -> usize {
 
 pub(crate) trait MuxSignal: Clone {
     fn copy_to_output(src: &Self, dst: &Self);
+    fn new () -> Self;
 }
 
 impl MuxSignal for Bus {
     fn copy_to_output(src: &Self, dst: &Self) {
         dst.write_word(&src.read_word());
     }
+    fn new() -> Self {
+        Bus::new()
+    }
 }
 
 impl MuxSignal for Wire {
     fn copy_to_output(src: &Self, dst: &Self) {
         write(dst, &read(src));
+    }
+    fn new() -> Self {
+        Wire::default()
     }
 }
 
@@ -40,7 +47,7 @@ pub struct SelectMux<T: MuxSignal> {
 }
 
 impl<T: MuxSignal> SelectMux<T> {
-    pub fn new(select: Vec<Wire>, inputs: Vec<T>, output: T) -> Self {
+    pub fn new(select: Vec<Wire>, inputs: Vec<T>) -> Self {
         let max_inputs =3usize.pow(select.len() as u32);
         assert!(
             max_inputs >= inputs.len(),
@@ -52,7 +59,7 @@ impl<T: MuxSignal> SelectMux<T> {
         Self {
             select,
             inputs,
-            output,
+            output: T::new(),
             bias: max_inputs as i32 /2,
         }
     }
@@ -166,8 +173,7 @@ mod tests {
                 0, 0, 0, 0, 0, 0, 0, 0, 1,
             ])),
         ];
-        let output = crate::components::bus::Bus::new();
-        let mut mux = Mux::new(select.clone(), inputs.clone(), output.clone());
+        let mut mux = Mux::new(select.clone(), inputs.clone());
 
         // N, N ->0
         write(&select[0], &Trit::N);
