@@ -1,8 +1,8 @@
 use crate::components::UnaryBusOutputComponent;
-use crate::components::binary_gate::BinaryGate;
-use crate::components::bus::Bus;
-use crate::components::mux::Mux;
-use crate::components::wire::Wire;
+use crate::components::platform::binary_gate::BinaryGate;
+use crate::components::platform::bus::Bus;
+use crate::components::platform::mux::Mux;
+use crate::components::platform::wire::Wire;
 use crate::binary_functions::{sum, and, any, cons, xor, or};
 use crate::types::Trit;
 use std::fmt::Debug;
@@ -89,8 +89,8 @@ impl Debug for FBlock {
 
 #[cfg(test)]
 mod tests {
-    use crate::components::wire::write;
-    use crate::tools::convert_int_to_unsigned_word;
+    use crate::components::platform::wire::write;
+    use crate::conversions::convert_int_to_unsigned_word;
     use crate::types::Word;
 
     #[test]

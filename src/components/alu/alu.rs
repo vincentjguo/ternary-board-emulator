@@ -1,7 +1,7 @@
 use crate::components::addsub::AddSub;
-use crate::components::bus::Bus;
+use crate::components::platform::bus::Bus;
 use crate::components::fblock::FBlock;
-use crate::components::mux::Mux;
+use crate::components::platform::mux::Mux;
 use crate::components::shifter::Shifter;
 use crate::components::{Component, UnaryBusOutputComponent};
 use std::fmt::Debug;
@@ -90,8 +90,8 @@ impl Debug for ALU {
 #[cfg(test)]
 mod tests {
     use crate::components::alu::ALU;
-    use crate::components::bus::Bus;
-    use crate::components::wire::write;
+    use crate::components::platform::bus::Bus;
+    use crate::components::platform::wire::write;
     use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
     use crate::tools::{convert_int_to_unsigned_word, convert_int_to_word};
     use crate::types::Trit;

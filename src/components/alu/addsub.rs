@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 use crate::components::adder::Adder;
-use crate::components::bus::Bus;
+use crate::components::platform::bus::Bus;
 use crate::components::negate::Negate;
-use crate::components::wire::{Wire, wire, read};
+use crate::components::platform::wire::{Wire, wire, read};
 use crate::components::{
     BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent,
 };
@@ -107,8 +107,8 @@ mod tests {
     use log::{debug};
 
     use super::*;
-    use crate::components::wire::{read};
-    use crate::tools;
+    use crate::components::platform::wire::{read};
+    use crate::conversions;
     use crate::types::{Word, MAX_VALUE, MIN_VALUE};
 
     struct AddSubTestCase {
@@ -138,10 +138,10 @@ mod tests {
         debug!(
             "{}: {} + {} with control {:?} => sum: {:?}, overflow: {:?}",
             test_case.name,
-            tools::convert_word_to_int(&test_case.a),
-            tools::convert_word_to_int(&test_case.b),
+            conversions::convert_word_to_int(&test_case.a),
+            conversions::convert_word_to_int(&test_case.b),
             test_case.control,
-            tools::convert_word_to_int(&result_sum),
+            conversions::convert_word_to_int(&result_sum),
             result_overflow
         );
 
@@ -171,9 +171,9 @@ mod tests {
         // We allow 2 overflow cases on either neg or pos side
         for i in [MIN_VALUE, MAX_VALUE, 0, -1, 1] {
             for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
-                let a = tools::convert_int_to_word(i);
-                let b = tools::convert_int_to_word(j);
-                let expected_sum = tools::convert_int_to_word((i + j).clamp(MIN_VALUE, MAX_VALUE));
+                let a = conversions::convert_int_to_word(i);
+                let b = conversions::convert_int_to_word(j);
+                let expected_sum = conversions::convert_int_to_word((i + j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i + j < MIN_VALUE {
                     Trit::N
                 } else if i + j > MAX_VALUE {
@@ -203,9 +203,9 @@ mod tests {
 
         for i in [MIN_VALUE, MAX_VALUE, 0, -1, 1] {
             for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
-                let a = tools::convert_int_to_word(i);
-                let b = tools::convert_int_to_word(j);
-                let expected_sum = tools::convert_int_to_word((i - j).clamp(MIN_VALUE, MAX_VALUE));
+                let a = conversions::convert_int_to_word(i);
+                let b = conversions::convert_int_to_word(j);
+                let expected_sum = conversions::convert_int_to_word((i - j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i - j < MIN_VALUE {
                     Trit::N
                 } else if i - j > MAX_VALUE {
@@ -234,8 +234,8 @@ mod tests {
         let mut test_cases = vec![];
 
         for i in MIN_VALUE..MAX_VALUE {
-            let a = tools::convert_int_to_word(i);
-            let b = tools::convert_int_to_word(1); // b can be anything in passthrough mode
+            let a = conversions::convert_int_to_word(i);
+            let b = conversions::convert_int_to_word(1); // b can be anything in passthrough mode
             let expected_sum = a.clone();
             test_cases.push(AddSubTestCase {
                 name: format!("Passthrough: {}", i),

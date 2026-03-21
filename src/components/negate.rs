@@ -1,4 +1,4 @@
-use crate::components::wire::{read, write, Wire};
+use crate::components::platform::wire::{read, write, Wire};
 use crate::components::{Component, UnaryWireOutputComponent};
 use crate::binary_functions::xor;
 use std::fmt::Debug;
@@ -22,8 +22,7 @@ impl Component for Negate {
     fn update(&mut self) {
         let a = read(&self.in1);
         let control = read(&self.control);
-
-
+        
         write(&self.out, &xor(&a, &control));
     }
 }
@@ -50,7 +49,7 @@ impl Debug for Negate {
 #[cfg(test)]
 mod tests {
     use crate::components::negate::Negate;
-    use crate::components::wire::{read, write};
+    use crate::components::platform::wire::{read, write};
     use crate::components::{Component, UnaryWireOutputComponent};
     use crate::types::Trit;
 

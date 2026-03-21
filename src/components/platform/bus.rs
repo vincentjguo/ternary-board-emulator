@@ -1,5 +1,5 @@
 use crate::components::IOComponent;
-use crate::components::wire::{Wire, read, wire, write};
+use crate::components::platform::wire::{Wire, read, wire, write};
 use crate::types::{Trit, WORD_SIZE, Word};
 use std::fmt::Debug;
 

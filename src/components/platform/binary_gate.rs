@@ -1,4 +1,4 @@
-use crate::components::bus::Bus;
+use crate::components::platform::bus::Bus;
 use crate::components::{Component, UnaryBusOutputComponent};
 use crate::binary_functions::BinaryFunction;
 use crate::types::WORD_SIZE;

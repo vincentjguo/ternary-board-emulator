@@ -1,20 +1,7 @@
-use crate::components::bus::Bus;
-use crate::components::wire::{read, write, Wire};
-use crate::components::{Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
+use crate::components::platform::bus::Bus;
+use crate::components::platform::wire::{read, write, Wire};
+use crate::components::{platform, Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
 use std::fmt::Debug;
-
-/// Multiplexer component.
-/// - select: control lines to select which input to output. 0 index least significant digit in unbalanced ternary
-/// - inputs: list of input buses. The number of inputs should be less than or equal to 3^select.len()
-///
-fn selected_index(select: &[Wire], bias: i32) -> usize {
-    let signed = select .iter()
-        .enumerate()
-        .fold(0_i32, |acc, (i, wire)| {
-            acc + read(wire).value() as i32 *3_i32.pow(i as u32)
-        })
-        + bias;
-    signed as usize}
 
 pub(crate) trait MuxSignal: Clone {
     fn copy_to_output(src: &Self, dst: &Self);
@@ -39,6 +26,9 @@ impl MuxSignal for Wire {
     }
 }
 
+/// Multiplexer component.
+/// - select: control lines to select which input to output. 0 index least significant digit in unbalanced ternary
+/// - inputs: list of input buses. The number of inputs should be less than or equal to 3^select.len()
 pub struct SelectMux<T: MuxSignal> {
     select: Vec<Wire>,
     inputs: Vec<T>,
@@ -67,7 +57,7 @@ impl<T: MuxSignal> SelectMux<T> {
 
 impl<T: MuxSignal> Component for SelectMux<T> {
     fn update(&mut self) {
-        let idx = selected_index(&self.select, self.bias);
+        let idx = platform::selected_index(&self.select, self.bias);
         assert!(
             idx < self.inputs.len(),
             "selected input index ({}) is not connected (inputs: {})",
@@ -82,13 +72,14 @@ impl<T: MuxSignal> Component for SelectMux<T> {
 pub type Mux = SelectMux<Bus>;
 
 impl UnaryBusOutputComponent for SelectMux<Bus> {
+    /// Output the selected input bus
     fn o_bus1(&self) -> &Bus {
         &self.output }
 }
 
 impl Debug for SelectMux<Bus> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let idx = selected_index(&self.select, self.bias);
+        let idx = platform::selected_index(&self.select, self.bias);
         let out = if idx < self.inputs.len() {
             self.inputs[idx].read_word()
         } else {
@@ -115,7 +106,7 @@ impl UnaryWireOutputComponent for SelectMux<Wire> {
 
 impl Debug for SelectMux<Wire> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let idx = selected_index(&self.select, self.bias);
+        let idx = platform::selected_index(&self.select, self.bias);
         let out = if idx < self.inputs.len() {
             read(&self.inputs[idx])
         } else {
@@ -133,8 +124,8 @@ impl Debug for SelectMux<Wire> {
 
 #[cfg(test)]
 mod tests {
-    use crate::components::mux::Mux;
-    use crate::components::wire::write;
+    use crate::components::platform::mux::Mux;
+    use crate::components::platform::wire::write;
     use crate::components::{Component, UnaryBusOutputComponent};
     use crate::types::Trit;
 

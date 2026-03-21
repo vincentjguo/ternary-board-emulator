@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::components::wire::{Wire, read, wire, write};
+use crate::components::platform::wire::{Wire, read, wire, write};
 use crate::components::{BinaryWireOutputComponent, Component};
 use crate::binary_functions::{cons, sum};
 use crate::types::Trit;
@@ -41,10 +41,11 @@ impl Component for HalfAdder {
 }
 
 impl BinaryWireOutputComponent for HalfAdder {
+    /// Carry out wire
     fn o_wire1(&self) -> &Wire {
         &self.c_out
     }
-
+    /// Sum output wire
     fn o_wire2(&self) -> &Wire {
         &self.sum_out
     }
@@ -67,7 +68,7 @@ impl Debug for HalfAdder {
 #[cfg(test)]
 mod tests {
     use crate::components::half_adder::HalfAdder;
-    use crate::components::wire::{read, wire, write};
+    use crate::components::platform::wire::{read, wire, write};
     use crate::components::{BinaryWireOutputComponent, Component};
     use crate::types::Trit;
 

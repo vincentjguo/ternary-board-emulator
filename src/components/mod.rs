@@ -1,15 +1,13 @@
+use platform::{bus, wire};
+
 pub mod adder;
 mod half_adder;
-pub mod wire;
-pub mod addsub;
-pub mod bus;
 mod negate;
-mod mux;
-pub mod fblock;
-pub mod binary_gate;
 pub mod alu;
 pub mod shifter;
 pub mod opcode_decoder;
+pub mod platform;
+pub mod registers;
 
 pub trait Component {
     /// read from wires and compute outputs
@@ -26,6 +24,11 @@ pub trait BinaryWireOutputComponent: Component {
     fn o_wire2(&self) -> &wire::Wire;
 }
 
+pub trait BinaryBusOutputComponent: Component {
+    fn o_bus1(&self) -> &bus::Bus;
+    fn o_bus2(&self) -> &bus::Bus;
+}
+
 pub trait UnaryWireOutputComponent: Component {
     fn o_wire1(&self) -> &wire::Wire;
 }
@@ -33,3 +36,4 @@ pub trait UnaryWireOutputComponent: Component {
 pub trait UnaryBusOutputComponent: Component {
     fn o_bus1(&self) -> &bus::Bus;
 }
+

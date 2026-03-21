@@ -1,6 +1,6 @@
-use crate::components::bus::Bus;
-use crate::components::mux::TritMux;
-use crate::components::wire::Wire;
+use crate::components::platform::bus::Bus;
+use crate::components::platform::mux::TritMux;
+use crate::components::platform::wire::Wire;
 use crate::components::{Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
 use crate::types::WORD_SIZE;
 use std::fmt::Debug;
@@ -29,7 +29,6 @@ pub struct Shifter {
 /// Trit shifter for a word. Supports shifts from 0 to 8 positions, with the shift amount determined by control wires c1, c2, and c3.
 /// c4 is used for pre- and post-inversion to enable both left and right shifts. If c4 is 0, the shifter performs a left shift; if c4 is 1, it performs a right shift.
 impl Shifter {
-    //noinspection DuplicatedCode
     //noinspection DuplicatedCode
     pub fn new(bus1: Bus, c1: Wire, c2: Wire, c3: Wire) -> Self {
         let mut pre_inv = Vec::new();
@@ -155,11 +154,11 @@ impl UnaryBusOutputComponent for Shifter {
 
 #[cfg(test)]
 mod tests {
-    use crate::components::bus::Bus;
+    use crate::components::platform::bus::Bus;
     use crate::components::shifter::Shifter;
-    use crate::components::wire::{wire, write};
+    use crate::components::platform::wire::{wire, write};
     use crate::components::{Component, UnaryBusOutputComponent};
-    use crate::tools::{convert_int_to_unsigned_word, convert_int_to_word};
+    use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
     use crate::types::{Trit, Word, WORD_SIZE};
     use log::debug;
 
