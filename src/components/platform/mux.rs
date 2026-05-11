@@ -1,7 +1,8 @@
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::{read, write, Wire};
-use crate::components::{platform, Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
+use crate::components::{platform, BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
 use std::fmt::Debug;
+use crate::types::Trit;
 
 pub(crate) trait MuxSignal: Clone {
     fn copy_to_output(src: &Self, dst: &Self);
@@ -26,8 +27,19 @@ impl MuxSignal for Wire {
     }
 }
 
+impl MuxSignal for [Wire; 2] {
+    fn copy_to_output(src: &Self, dst: &Self) {
+        for i in 0..2 {
+            write(&dst[i], &read(&src[i]));
+        }
+    }
+    fn new() -> Self {
+        [Wire::default(), Wire::default()]
+    }
+}
+
 /// Multiplexer component.
-/// - select: control lines to select which input to output. 0 index least significant digit in unbalanced ternary
+/// - select: control lines to select which input to output. 0 index most significant digit in unbalanced ternary
 /// - inputs: list of input buses. The number of inputs should be less than or equal to 3^select.len()
 pub struct SelectMux<T: MuxSignal> {
     select: Vec<Wire>,
@@ -68,16 +80,29 @@ impl<T: MuxSignal> Component for SelectMux<T> {
     }
 }
 
+// impl<T: MuxSignal + Debug> Debug for SelectMux<T> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         let idx = platform::selected_index(&self.select, self.bias);
+//         write!(
+//             f,
+//             "SelectMux {{ select: {:?}, selected_index: {}, output: {:?} }}",
+//             self.select.iter().map(read).collect::<Vec<_>>(),
+//             idx,
+//             self.output
+//         )
+//     }
+// }
+
 /// Specific mux for bus inputs/outputs
 pub type Mux = SelectMux<Bus>;
 
-impl UnaryBusOutputComponent for SelectMux<Bus> {
+impl UnaryBusOutputComponent for Mux {
     /// Output the selected input bus
     fn o_bus1(&self) -> &Bus {
         &self.output }
 }
 
-impl Debug for SelectMux<Bus> {
+impl Debug for Mux {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let idx = platform::selected_index(&self.select, self.bias);
         let out = if idx < self.inputs.len() {
@@ -89,8 +114,9 @@ impl Debug for SelectMux<Bus> {
 
         write!(
             f,
-            "Mux {{ select: {:?}, output: {:?} }}",
+            "Mux {{ select: {:?}, idx: {}, output: {:?} }}",
             self.select.iter().map(read).collect::<Vec<_>>(),
+            idx,
             out )
     }
 }
@@ -98,13 +124,13 @@ impl Debug for SelectMux<Bus> {
 /// Specific mux for a single trit input/output
 pub type TritMux = SelectMux<Wire>;
 
-impl UnaryWireOutputComponent for SelectMux<Wire> {
+impl UnaryWireOutputComponent for TritMux {
     fn o_wire1(&self) -> &Wire {
         &self.output
     }
 }
 
-impl Debug for SelectMux<Wire> {
+impl Debug for TritMux {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let idx = platform::selected_index(&self.select, self.bias);
         let out = if idx < self.inputs.len() {
@@ -118,6 +144,29 @@ impl Debug for SelectMux<Wire> {
             f,
             "TritMux {{ select: {:?}, output: {:?} }}",
             self.select.iter().map(read).collect::<Vec<_>>(),
+            out )
+    }
+}
+
+pub type BinaryTritMux = SelectMux<[Wire; 2]>;
+
+impl BinaryWireOutputComponent for BinaryTritMux {
+    fn o_wire1(&self) -> &Wire {
+        &self.output[0]
+    }
+    fn o_wire2(&self) -> &Wire {&self.output[1]}
+}
+
+impl Debug for BinaryTritMux {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let idx = platform::selected_index(&self.select, self.bias);
+        let out = [read(&self.inputs[idx][0]), read(&self.inputs[idx][1])];
+
+        write!(
+            f,
+            "TritMux {{ select: {:?}, idx: {} output: {:?} }}",
+            self.select.iter().map(read).collect::<Vec<_>>(),
+            idx,
             out )
     }
 }
@@ -167,56 +216,56 @@ mod tests {
         let mut mux = Mux::new(select.clone(), inputs.clone());
 
         // N, N ->0
-        write(&select[0], &Trit::N);
         write(&select[1], &Trit::N);
+        write(&select[0], &Trit::N);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[0].read_word());
 
         // Z, N ->1
-        write(&select[0], &Trit::Z);
-        write(&select[1], &Trit::N);
+        write(&select[1], &Trit::Z);
+        write(&select[0], &Trit::N);
         mux.update();
-        assert_eq!(mux.o_bus1().read_word(), inputs[1].read_word());
+        assert_eq!(mux.o_bus1().read_word(), inputs[1].read_word(), "{:?}", mux);
 
         // P, N ->2
-        write(&select[0], &Trit::P);
-        write(&select[1], &Trit::N);
+        write(&select[1], &Trit::P);
+        write(&select[0], &Trit::N);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[2].read_word());
 
         // N, Z ->3
-        write(&select[0], &Trit::N);
-        write(&select[1], &Trit::Z);
+        write(&select[1], &Trit::N);
+        write(&select[0], &Trit::Z);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[3].read_word());
 
         // Z, Z ->4
-        write(&select[0], &Trit::Z);
         write(&select[1], &Trit::Z);
+        write(&select[0], &Trit::Z);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[4].read_word());
 
         // P, Z ->5
-        write(&select[0], &Trit::P);
-        write(&select[1], &Trit::Z);
+        write(&select[1], &Trit::P);
+        write(&select[0], &Trit::Z);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[5].read_word());
 
         // N, P ->6
-        write(&select[0], &Trit::N);
-        write(&select[1], &Trit::P);
+        write(&select[1], &Trit::N);
+        write(&select[0], &Trit::P);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[6].read_word());
 
         // Z, P ->7
-        write(&select[0], &Trit::Z);
-        write(&select[1], &Trit::P);
+        write(&select[1], &Trit::Z);
+        write(&select[0], &Trit::P);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[7].read_word());
 
         // P, P ->8
-        write(&select[0], &Trit::P);
         write(&select[1], &Trit::P);
+        write(&select[0], &Trit::P);
         mux.update();
         assert_eq!(mux.o_bus1().read_word(), inputs[8].read_word());
     }

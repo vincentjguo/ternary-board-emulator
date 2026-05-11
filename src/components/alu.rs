@@ -1,21 +1,23 @@
-use crate::components::addsub::AddSub;
+
 use crate::components::platform::bus::Bus;
-use crate::components::fblock::FBlock;
 use crate::components::platform::mux::Mux;
 use crate::components::shifter::Shifter;
 use crate::components::{Component, UnaryBusOutputComponent};
 use std::fmt::Debug;
+use crate::components::addsub::AddSub;
+use crate::components::fblock::FBlock;
 
 /// ALU (Arithmetic Logic Unit) that performs various operations based on control signals.
+///
 /// Control signals:
 ///
 /// | Control Bits | Operation           |
 /// |--------------|---------------------|
 /// | +XXX-X       | Addition (bus1 + bus2) |
 /// | -XXX-X       | Subtraction (bus1 - bus2) |
-/// | 0XX-XX       | Pass-through (bus1) |
-/// | XAB0XX       | FBlock operations selected by AB (unsigned) (AND, OR, XOR, etc.) |
-/// | XXXA+X       | Shift operations in direction of A (left if A=-, right if A=0) and amount determined by B\[0:2\] (unsigned) |
+/// | 0XXX-X       | Pass-through (bus1) |
+/// | XABX0X       | FBlock operations selected by AB (unsigned) (AND, OR, XOR, etc.) |
+/// | XXXA+X       | Shift operations in direction of A (left if A=0, right if A=-) and amount determined by B\[0:2\] (unsigned) |
 pub struct ALU {
     bus1: Bus,
     bus2: Bus,
@@ -38,8 +40,9 @@ impl ALU {
         );
         let shifter = Shifter::new(
             bus1.clone(),
-            bus2.get_wire(0).clone(),
-            bus2.get_wire(1).clone(),
+            // get least significant 2 trits
+            bus2.get_wire(7).clone(),
+            bus2.get_wire(8).clone(),
             control.get_wire(3).clone(),
         );
         let mux = Mux::new(
@@ -89,13 +92,14 @@ impl Debug for ALU {
 
 #[cfg(test)]
 mod tests {
-    use crate::components::alu::ALU;
     use crate::components::platform::bus::Bus;
     use crate::components::platform::wire::write;
     use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
-    use crate::tools::{convert_int_to_unsigned_word, convert_int_to_word};
+    use crate::components::alu::ALU;
+    use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
     use crate::types::Trit;
 
+    #[test]
     pub fn test_alu_addsub() {
         let mut bus1 = Bus::new();
         let mut bus2 = Bus::new();
@@ -141,10 +145,10 @@ mod tests {
         let control = Bus::new();
         let mut alu = ALU::new(bus1.clone(), bus2.clone(), control.clone());
 
-        write(control.get_wire(3), &Trit::Z); // Set control[3] to 0 for right shift
+        write(control.get_wire(3), &Trit::N); // Set control[3] to -1 for right shift
         write(control.get_wire(4), &Trit::P); // Set control[4] to 1 for Shifter
 
-        bus1.write(&convert_int_to_word(18)); // bus1 = 9 (+-00)
+        bus1.write(&convert_int_to_word(18)); // bus1 = 18 (+-00)
         bus2.write(&convert_int_to_unsigned_word(2)); // bus2 = 2 (unsigned) (0001)
 
         alu.update();

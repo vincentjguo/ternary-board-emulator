@@ -26,10 +26,10 @@ pub struct Shifter {
     post_inv: [TritMux; WORD_SIZE],
 }
 
-/// Trit shifter for a word. Supports shifts from 0 to 8 positions, with the shift amount determined by control wires c1, c2, and c3.
-/// c4 is used for pre- and post-inversion to enable both left and right shifts. If c4 is 0, the shifter performs a left shift; if c4 is 1, it performs a right shift.
+/// Trit shifter for a word. Supports shifts from 0 to 8 positions, with the shift amount determined by control wires [c1, c2].
+/// c3 is used for pre- and post-inversion to enable both left and right shifts.
+/// If c3 is -1 (unsigned), the shifter performs a right shift; if c3 is 0, it performs a left shift.
 impl Shifter {
-    //noinspection DuplicatedCode
     pub fn new(bus1: Bus, c1: Wire, c2: Wire, c3: Wire) -> Self {
         let mut pre_inv = Vec::new();
         let mut post_inv = Vec::new();
@@ -61,7 +61,7 @@ impl Shifter {
         }
         for i in 0..WORD_SIZE {
             stage1.push(TritMux::new(
-                vec![c1.clone()],
+                vec![c2.clone()],
                 vec![
                     pre_inv[i].o_wire1().clone(),
                     link_shift_wires!(i, pre_inv, 1),
@@ -69,7 +69,7 @@ impl Shifter {
                 ]
             ));
             stage2.push(TritMux::new(
-                vec![c2.clone()],
+                vec![c1.clone()],
                 vec![
                     stage1[i].o_wire1().clone(),
                     link_shift_wires!(i, stage1, 3),
@@ -133,15 +133,12 @@ impl Debug for Shifter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Shifter {{ stage1: {:?}, stage2: {:?} }}",
-            self.stage1
-                .iter()
-                .map(|mux| mux.o_wire1().clone())
-                .collect::<Vec<Wire>>(),
-            self.stage2
-                .iter()
-                .map(|mux| mux.o_wire1().clone())
-                .collect::<Vec<Wire>>()
+            "Shifter {{pre-inv: {:?}\n stage1: {:?}\n stage2: {:?}\n post-inv: {:?}\n out: {:?}}}",
+            self.pre_inv,
+            self.stage1,
+            self.stage2,
+            self.post_inv,
+            self.out.read_word()
         )
     }
 }
@@ -157,13 +154,13 @@ mod tests {
     use crate::components::platform::bus::Bus;
     use crate::components::shifter::Shifter;
     use crate::components::platform::wire::{wire, write};
-    use crate::components::{Component, UnaryBusOutputComponent};
+    use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
     use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
     use crate::types::{Trit, Word, WORD_SIZE};
-    use log::debug;
+    use log::{debug, info};
 
     #[test]
-    fn test_lshift() {
+    fn test_rshift() {
         pretty_env_logger::try_init().ok();
         let bus1 = Bus::from_word(&Word::state([1, 0, 0, 0, 0, 0, 0, 0, 0]));
         let c1 = wire(Trit::default());
@@ -173,14 +170,13 @@ mod tests {
         let mut shifter = Shifter::new(bus1, c1.clone(), c2.clone(), c3.clone());
 
         for i in 0..WORD_SIZE {
-            let w = convert_int_to_unsigned_word(i as i32);
-            write(&c1, w.get_trit(0));
-            write(&c2, w.get_trit(1));
+            let w = convert_int_to_unsigned_word((WORD_SIZE - 1 - i) as i32);
+            write(&c1, w.get_trit(7));
+            write(&c2, w.get_trit(8));
             shifter.update();
 
             let expected = 3_i32.pow(i as u32);
-            debug!("{:?}", shifter.stage1);
-            debug!("{:?}", shifter.stage2);
+            debug!("{:?}", shifter);
             assert_eq!(
                 shifter.o_bus1().read_word(),
                 convert_int_to_word(expected),
@@ -191,7 +187,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rshift() {
+    fn test_lshift() {
         pretty_env_logger::try_init().ok();
         let bus1 = Bus::from_word(&Word::state([0, 0, 0, 0, 0, 0, 0, 0, 1]));
         let c1 = wire(Trit::default());
@@ -202,13 +198,12 @@ mod tests {
 
         for i in 0..WORD_SIZE {
             let w = convert_int_to_unsigned_word(i as i32);
-            write(&c1, w.get_trit(0));
-            write(&c2, w.get_trit(1));
+            write(&c1, w.get_trit(7));
+            write(&c2, w.get_trit(8));
             shifter.update();
 
-            let expected = 3_i32.pow((WORD_SIZE - 1 - i) as u32);
-            debug!("{:?}", shifter.stage1);
-            debug!("{:?}", shifter.stage2);
+            let expected = 3_i32.pow(i as u32);
+            debug!("{:?}", shifter);
             assert_eq!(
                 shifter.o_bus1().read_word(),
                 convert_int_to_word(expected),

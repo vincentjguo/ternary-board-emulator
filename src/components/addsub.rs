@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use crate::components::adder::Adder;
 use crate::components::platform::bus::Bus;
 use crate::components::negate::Negate;
@@ -31,15 +31,17 @@ impl AddSub {
             Negate::new(bus2.get_wire(i).clone(), control.clone())
         });
         let mut carry = wire(Trit::default());
-        let adder: [Adder; WORD_SIZE] = std::array::from_fn(|i| {
+        let mut adder: [Adder; WORD_SIZE] = std::array::from_fn(|i| {
+            let reversed_i = WORD_SIZE - 1 - i;
             let adder = Adder::new(
-                bus1.get_wire(i).clone(),
-                negate[i].o_wire1().clone(),
+                bus1.get_wire(reversed_i).clone(),
+                negate[reversed_i].o_wire1().clone(),
                 carry.clone(),
             );
             carry = adder.o_wire1().clone();
             adder
         });
+        adder.reverse();
         let s_out = Bus::from_wires(
             adder
                 .iter()
@@ -49,7 +51,7 @@ impl AddSub {
                 .expect("Invalid wire count for bus"),
         );
 
-        let c_out = adder[WORD_SIZE - 1].o_wire1().clone();
+        let c_out = adder[0].o_wire1().clone();
         AddSub {
             bus1,
             bus2,
@@ -64,11 +66,11 @@ impl AddSub {
 
 impl Component for AddSub {
     fn update(&mut self) {
-        for negate in self.negate.iter_mut() {
+        for negate in self.negate.iter_mut().rev() {
             negate.update();
         }
 
-        for adder in self.adder.iter_mut() {
+        for adder in self.adder.iter_mut().rev() {
             adder.update();
         }
     }
@@ -88,15 +90,10 @@ impl UnaryBusOutputComponent for AddSub {
 
 impl Debug for AddSub {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let a = self.bus1.read_word();
-        let b = self.bus2.read_word();
-        let control = read(&self.control);
-        let sum = self.s_out.read_word();
-        let c_out = read(&self.c_out);
         write!(
             f,
-            "AddSub {{ bus1: {:?}, bus2: {:?}, control: {:?}, sum_out: {:?}, c_out: {:?} }}",
-            a, b, control, sum, c_out
+            "AddSub {{ bus1: {:?}\n bus2: {:?}\n control: {:?}\n sum_out: {:?}\n c_out: {:?}\n adders: {:?}}}",
+            self.bus1, self.bus2, self.control, self.s_out, self.c_out, self.adder
         )
     }
 }
@@ -127,7 +124,7 @@ mod tests {
         let bus2 = Bus::from_word(&test_case.b);
         let control = wire(test_case.control);
 
-        // Create and update ALU
+        // Create and update AddSub component
         let mut add_sub = AddSub::new(bus1, bus2, control);
         add_sub.update();
 
@@ -136,10 +133,8 @@ mod tests {
         let result_overflow = read(add_sub.o_wire1());
 
         debug!(
-            "{}: {} + {} with control {:?} => sum: {:?}, overflow: {:?}",
+            "{} with control {:?} => sum: {:?}, overflow: {:?}",
             test_case.name,
-            conversions::convert_word_to_int(&test_case.a),
-            conversions::convert_word_to_int(&test_case.b),
             test_case.control,
             conversions::convert_word_to_int(&result_sum),
             result_overflow
@@ -148,19 +143,38 @@ mod tests {
         // Assert results
         assert_eq!(
             result_overflow, test_case.expected_overflow,
-            "{}: Expected overflow {:?}, got {:?}",
-            test_case.name, test_case.expected_overflow, result_overflow
+            "{}: Expected overflow {:?}, got {:?}\n {:?}",
+            test_case.name, test_case.expected_overflow, result_overflow, add_sub
         );
         if test_case.expected_overflow == Trit::Z {
             assert_eq!(
                 result_sum, test_case.expected_sum,
-                "{}: Expected sum {:?}, got {:?}",
-                test_case.name, test_case.expected_sum, result_sum
+                "{}: Expected sum {:?}, got {:?}\n {:?}",
+                test_case.name, test_case.expected_sum, result_sum, add_sub
             );
         }
 
         debug!("=> OK")
     }
+
+    // #[test]
+    // #[ignore]
+    // fn test_specific() {
+    //     let mut test_cases = vec![
+    //         AddSubTestCase {
+    //             name: format!("Addition: {} + {}", -9841, -3280),
+    //             a: conversions::convert_int_to_word(-9841),
+    //             b: conversions::convert_int_to_word(-3280),
+    //             control: Trit::P,
+    //             expected_sum: Word::new(),
+    //             expected_overflow: Trit::N,
+    //         }
+    //     ];
+    //
+    //     for test_case in test_cases {
+    //         run_addsub_test(test_case);
+    //     }
+    // }
 
     #[test]
     fn test_addsub_addition() {

@@ -54,14 +54,19 @@ pub fn any(a: &Trit, b: &Trit) -> Trit {
     }
 }
 
-/// XOR/MULTIPLICATION gate
-pub fn xor(a: &Trit, b: &Trit) -> Trit {
+/// MULTIPLICATION gate
+pub fn mult(a: &Trit, b: &Trit) -> Trit {
     Trit::state(a.value() * b.value())
+}
+
+/// XOR/NMULT gate
+pub fn xor(a: &Trit, b: &Trit) -> Trit {
+    Trit::state(-a.value() * b.value())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::binary_functions;
+    use crate::components::platform::binary_functions;
     use crate::types::Trit;
 
     #[derive(Debug)]
@@ -210,6 +215,23 @@ mod tests {
             case(&[1, 1], &[1]),
         ];
 
-        run_binary_cases("mul", binary_functions::xor, &cases);
+        run_binary_cases("mul", binary_functions::mult, &cases);
+    }
+
+    #[test]
+    fn xor_gate_cases() {
+        let cases = vec![
+            case(&[-1, -1], &[-1]),
+            case(&[-1, 0], &[0]),
+            case(&[-1, 1], &[1]),
+            case(&[0, -1], &[0]),
+            case(&[0, 0], &[0]),
+            case(&[0, 1], &[0]),
+            case(&[1, -1], &[1]),
+            case(&[1, 0], &[0]),
+            case(&[1, 1], &[-1]),
+        ];
+
+        run_binary_cases("xor", binary_functions::xor, &cases);
     }
 }

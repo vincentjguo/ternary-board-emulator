@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use crate::components::half_adder::HalfAdder;
 use crate::components::platform::wire::{read, wire, write, Wire};
 use crate::components::{BinaryWireOutputComponent, Component};
-use crate::binary_functions::any;
+use crate::components::platform::binary_functions::any;
 use crate::types::Trit;
 
 /// Full Adder component.
@@ -64,15 +64,10 @@ impl BinaryWireOutputComponent for Adder {
 
 impl Debug for Adder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let a = read(&self.in1);
-        let b = read(&self.in2);
-        let c_in = read(&self.c_in);
-        let sum_out = read(&self.sum_out);
-        let c_out = read(&self.c_out);
-        write!(
+        writeln!(
             f,
-            "Adder {{ in1: {:?}, in2: {:?}, c_in: {:?}, sum_out: {:?}, c_out: {:?} }}",
-            a, b, c_in, sum_out, c_out
+            "Adder {{ in1: {:?}, in2: {:?}, c_in: {:?}, sum_out: {:?}, c_out: {:?} }}\n",
+            self.in1, self.in2, self.c_in, self.sum_out, self.c_out
         )
     }
 }

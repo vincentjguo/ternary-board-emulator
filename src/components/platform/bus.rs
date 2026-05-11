@@ -50,7 +50,7 @@ impl Debug for Bus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let trits = std::array::from_fn(|i| read(&self.0[i]));
         let word = Word::from_trits(trits);
-        write!(f, "{}", word)
+        write!(f, "Bus {{{}}}", word)
     }
 }
 

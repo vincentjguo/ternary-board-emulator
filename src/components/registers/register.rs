@@ -1,8 +1,10 @@
 use crate::components::{Component, UnaryBusOutputComponent};
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::Wire;
-use crate::types::Word;
+use crate::types::{Trit, Word};
 
+/// A register that can hold a value and update it based on a control signal.
+/// When the control signal is non-zero, the register loads the value from d_in to d_out.
 pub struct Register {
     name: String,
     d_out: Bus,
@@ -26,17 +28,13 @@ impl Component for Register {
     fn update(&mut self) {
         let control = crate::components::platform::wire::read(&self.control);
         match control {
-            crate::types::Trit::Z => {
+            Trit::Z => {
                 // Do nothing, keep the current value
             },
-            crate::types::Trit::P => {
+            Trit::P | Trit::N => {
                 // Load the new value from d_in to d_out
                 let value = self.d_in.read_word();
                 self.d_out.write_word(&value);
-            },
-            crate::types::Trit::N => {
-                // Reset the register to zero
-                self.d_out.write_word(&Word::new());
             }
         }
     }
@@ -58,5 +56,42 @@ impl std::fmt::Debug for Register {
             "Register {{ name: {}, d_in: {:?}, control: {:?}, d_out: {:?} }}",
             self.name, d_in, control, d_out
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::components::platform::bus::Bus;
+    use crate::components::platform::wire::{read, write, wire};
+    use crate::components::{Component, UnaryBusOutputComponent};
+    use crate::components::registers::register::Register;
+    use crate::types::{Trit, Word};
+
+    #[test]
+    fn test_register() {
+        let d_in = Bus::new();
+        let control = wire(Trit::Z);
+        let mut register = Register::new("R1".to_string(), d_in.clone(), control.clone());
+
+        // Initially, the register should hold the default value (all Z)
+        assert_eq!(register.o_bus1().read_word(), Word::new());
+
+        // Write a value to d_in and set control to P to load it into the register
+        let value = Word::from_trits([Trit::P; 9]);
+        d_in.write_word(&value);
+        write(&control, &Trit::P);
+        register.update();
+        assert_eq!(register.o_bus1().read_word(), value);
+
+        // Change control to N and update, the register should still hold the same value
+        write(&control, &Trit::N);
+        register.update();
+        assert_eq!(register.o_bus1().read_word(), value);
+
+        // Set control back to Z and update, the register should still hold the same value
+        write(&control, &Trit::Z);
+        register.update();
+        assert_eq!(register.o_bus1().read_word(), value);
     }
 }

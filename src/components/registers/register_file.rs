@@ -6,6 +6,13 @@ use crate::components::registers::register::Register;
 use crate::components::{BinaryBusOutputComponent, Component, UnaryBusOutputComponent};
 use crate::types::{Trit, WORD_SIZE, Word};
 
+/// A register file with 4 registers, each of size WORD_SIZE
+/// Special Registers:
+/// - Register -4: Program Counter
+/// - Register -3: EPC
+/// - Register -2: Instruction Register
+/// - Register -1: Status Register
+/// The remaining registers are general purpose registers that can be used by the program
 pub struct RegisterFile {
     registers: [Register; WORD_SIZE],
 
@@ -164,8 +171,8 @@ mod tests {
             write_data.write_word(&convert_int_to_word(i as i32));
 
             let select_word = conversions::convert_int_to_unsigned_word(i as i32);
-            write(&reg_write_select[0], select_word.get_trit(0));
-            write(&reg_write_select[1], select_word.get_trit(1));
+            write(&reg_write_select[0], select_word.get_trit(7));
+            write(&reg_write_select[1], select_word.get_trit(8));
             reg_file.update();
         }
 
@@ -174,10 +181,10 @@ mod tests {
             for j in 0..WORD_SIZE {
                 let select_word1 = conversions::convert_int_to_unsigned_word(i as i32);
                 let select_word2 = conversions::convert_int_to_unsigned_word(j as i32);
-                write(&reg1_select[0], select_word1.get_trit(0));
-                write(&reg1_select[1], select_word1.get_trit(1));
-                write(&reg2_select[0], select_word2.get_trit(0));
-                write(&reg2_select[1], select_word2.get_trit(1));
+                write(&reg1_select[0], select_word1.get_trit(7));
+                write(&reg1_select[1], select_word1.get_trit(8));
+                write(&reg2_select[0], select_word2.get_trit(7));
+                write(&reg2_select[1], select_word2.get_trit(8));
                 reg_file.update();
 
                 assert_eq!(
@@ -192,58 +199,5 @@ mod tests {
                 );
             }
         }
-    }
-
-    #[test]
-    fn test_reset_register() {
-        let reg1_select = [wire(Trit::N), wire(Trit::N)];
-        let reg2_select = [wire(Trit::N), wire(Trit::N)];
-        let reg_write_select = [wire(Trit::N), wire(Trit::N)];
-        let write_control = wire(Trit::N);
-        let write_data = Bus::new();
-        let written_word = Word::state([1, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-        let mut reg_file = RegisterFile::new(
-            reg1_select.clone(),
-            reg2_select.clone(),
-            reg_write_select.clone(),
-            write_control.clone(),
-            write_data.clone(),
-        );
-
-        // Write to register 0
-        write(&reg_write_select[0], &Trit::N);
-        write(&reg_write_select[1], &Trit::N);
-        write(&write_control, &Trit::P);
-        write_data.write_word(&written_word);
-        reg_file.update();
-
-        // Read from register 0 to confirm write
-        write(&reg1_select[0], &Trit::N);
-        write(&reg1_select[1], &Trit::N);
-        write(&write_control, &Trit::Z);
-        reg_file.update();
-        assert_eq!(
-            reg_file.o_bus1().read_word(),
-            written_word,
-            "Failed to write register 0"
-        );
-
-        // Reset register 0
-        write(&write_control, &Trit::N);
-        write(&reg_write_select[0], &Trit::N);
-        write(&reg_write_select[1], &Trit::N);
-        reg_file.update();
-
-        // Read from register 0 to confirm reset
-        write(&reg1_select[0], &Trit::N);
-        write(&reg1_select[1], &Trit::N);
-        write(&write_control, &Trit::Z);
-        reg_file.update();
-        assert_eq!(
-            reg_file.o_bus1().read_word(),
-            Word::state([0; WORD_SIZE]),
-            "Failed to reset register 0"
-        );
     }
 }

@@ -3,11 +3,15 @@ use platform::{bus, wire};
 pub mod adder;
 mod half_adder;
 mod negate;
-pub mod alu;
 pub mod shifter;
 pub mod opcode_decoder;
 pub mod platform;
 pub mod registers;
+pub mod trap;
+pub mod addsub;
+pub mod fblock;
+pub mod alu;
+pub mod immediate_extend;
 
 pub trait Component {
     /// read from wires and compute outputs

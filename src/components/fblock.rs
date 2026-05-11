@@ -1,9 +1,9 @@
-use crate::components::UnaryBusOutputComponent;
+use crate::components::platform::binary_functions::{and, any, cons, or, sum, xor};
 use crate::components::platform::binary_gate::BinaryGate;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::mux::Mux;
 use crate::components::platform::wire::Wire;
-use crate::binary_functions::{sum, and, any, cons, xor, or};
+use crate::components::UnaryBusOutputComponent;
 use crate::types::Trit;
 use std::fmt::Debug;
 
@@ -81,7 +81,7 @@ impl Debug for FBlock {
             "FBlock {{ in1: {:?}, in2: {:?}, select: {:?}, out: {:?} }}",
             self.in1.read_word(),
             self.in2.read_word(),
-            select_values,
+            self.mux,
             self.out.read_word()
         )
     }
@@ -133,8 +133,8 @@ mod tests {
 
                     let select = convert_int_to_unsigned_word(func_idx as i32);
 
-                    write(&s0, select.get_trit(0));
-                    write(&s1, select.get_trit(1));
+                    write(&s0, select.get_trit(7));
+                    write(&s1, select.get_trit(8));
                     fblock.update();
 
                     let out = fblock.o_bus1();

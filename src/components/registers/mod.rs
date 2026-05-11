@@ -1,2 +1,2 @@
-mod register_file;
+pub mod register_file;
 mod register;
