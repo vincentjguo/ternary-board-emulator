@@ -26,7 +26,7 @@ pub struct Shifter {
     post_inv: [TritMux; WORD_SIZE],
 }
 
-/// Trit shifter for a word. Supports shifts from 0 to 8 positions, with the shift amount determined by control wires [c1, c2].
+/// Trit shifter for a word. Supports shifts from 0 to 8 positions, with the shift amount determined by control wires [c1, c2] (c1 most significant).
 /// c3 is used for pre- and post-inversion to enable both left and right shifts.
 /// If c3 is -1 (unsigned), the shifter performs a right shift; if c3 is 0, it performs a left shift.
 impl Shifter {

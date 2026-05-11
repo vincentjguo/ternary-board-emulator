@@ -51,7 +51,7 @@ pub struct OpcodeDecoder {
     /// - `-` register `t`
     /// - `0` register `s`
     /// - `+` register `d`
-    pub primary_read_register: Wire,
+    pub primary_reg: Wire,
 
     /// RegDst:
     /// - `-` register (t) for immediate/load commands
@@ -79,9 +79,9 @@ pub struct OpcodeDecoder {
     pub mem_control: Wire,
 
     /// Branch:
-    /// - `+` to branch if equal
-    /// - `0` to not branch
     /// - `-` to branch if not equal
+    /// - `0` to not branch
+    /// - `+` to branch if equal
     pub branch: Wire,
 
     /// ALUSrc:
@@ -103,7 +103,7 @@ impl OpcodeDecoder {
     pub fn new(opcode: Bus) -> Self {
         Self {
             opcode,
-            primary_read_register: Wire::default(),
+            primary_reg: Wire::default(),
             reg_dst: Wire::default(),
             load_immediate: Wire::default(),
             alu_control: Bus::new(),
@@ -310,7 +310,7 @@ impl crate::components::Component for OpcodeDecoder {
             // lh: load high format; passthrough alu and write to high 5 trits of register
             (Trit::P, Trit::P, _) => {
                 write(&self.reg_write, &Trit::P);
-                write(&self.primary_read_register, &Trit::P);
+                write(&self.primary_reg, &Trit::P);
                 write(&self.load_immediate, &Trit::P);
                 write(&self.alu_src, &Trit::P);
                 self.set_addsub_control_mult();
@@ -318,7 +318,7 @@ impl crate::components::Component for OpcodeDecoder {
             // ll: load low format; passthrough alu and write to low 4 trits of register
             (Trit::P, Trit::N, Trit::N) => {
                 write(&self.reg_write, &Trit::N);
-                write(&self.primary_read_register, &Trit::P);
+                write(&self.primary_reg, &Trit::P);
                 write(&self.load_immediate, &Trit::N);
                 write(&self.alu_src, &Trit::P);
                 self.set_addsub_control_mult();

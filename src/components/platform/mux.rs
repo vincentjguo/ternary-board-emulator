@@ -171,6 +171,23 @@ impl Debug for BinaryTritMux {
     }
 }
 
+/// A bus-sized mux that can be lazily initialized with inputs later
+/// Used to break a dependency cycle
+pub type LazyMux = Mux;
+
+impl LazyMux {
+    pub fn set_inputs(&mut self, inputs: Vec<Bus>) {
+        let max_inputs =3usize.pow(self.select.len() as u32);
+        assert!(
+            max_inputs >= inputs.len(),
+            "select lines ({}) do not cover all inputs ({})",
+            max_inputs,
+            inputs.len()
+        );
+        self.inputs = inputs;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::components::platform::mux::Mux;

@@ -46,6 +46,18 @@ impl Bus {
     }
 }
 
+
+impl<Idx> std::ops::Index<Idx> for Bus
+where
+    Idx: std::slice::SliceIndex<[Wire]>,
+{
+    type Output = <Idx as std::slice::SliceIndex<[Wire]>>::Output;
+
+    fn index(&self, index: Idx) -> &Self::Output {
+        &(&self.0[..])[index]
+    }
+}
+
 impl Debug for Bus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let trits = std::array::from_fn(|i| read(&self.0[i]));

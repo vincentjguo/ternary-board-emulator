@@ -1,9 +1,9 @@
 use crate::components::platform::bus::Bus;
-use crate::components::platform::wire::{read, Wire};
+use crate::components::platform::wire::{Wire, read};
 use crate::components::{Component, UnaryBusOutputComponent};
 use crate::conversions::convert_word_to_int;
 use crate::types::Trit::P;
-use crate::types::{Trit, Word, WORD_SIZE};
+use crate::types::{Trit, WORD_SIZE, Word};
 use std::fmt::Debug;
 
 const MEMORY_SIZE: usize = 3_usize.pow(WORD_SIZE as u32);
@@ -31,6 +31,12 @@ impl Memory {
         }
     }
 
+    /// exposes the data_out bus to be modified
+    /// Breaks a dependency cycle
+    pub fn set_data_out_bus(&mut self, bus: Bus) {
+        self.data_out = bus;
+    }
+
     fn write(&mut self) {
         let addr = convert_word_to_int(&self.addr_in.read_word()) as usize;
         let value = self.data_in.read_word();
@@ -52,7 +58,7 @@ impl Component for Memory {
         match read(&self.control) {
             P => self.write(),
             Trit::N => self.read(),
-            _ => {}// do nothing
+            _ => {} // do nothing
         }
     }
 }
@@ -67,11 +73,7 @@ impl Debug for Memory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let addr = convert_word_to_int(&self.addr_in.read_word()) as usize;
         let value = self.data_out.read_word();
-        write!(
-            f,
-            "Memory {{ addr: {}, value: {:?} }}",
-            addr, value
-        )
+        write!(f, "Memory {{ addr: {}, value: {:?} }}", addr, value)
     }
 }
 
