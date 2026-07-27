@@ -2,7 +2,6 @@ use crate::components::IOComponent;
 use crate::types::Trit;
 use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
-use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -10,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 pub struct Wire {
     id: u64,
 
-    ref_trit: Rc<RefCell<Trit>>
+    ref_trit: Rc<RefCell<Trit>>,
 }
 
 impl Wire {
@@ -19,9 +18,9 @@ impl Wire {
 
         let id = COUNTER.fetch_add(1, Ordering::SeqCst);
 
-        Wire{
+        Wire {
             id,
-            ref_trit: Rc::new(RefCell::new(trit))
+            ref_trit: Rc::new(RefCell::new(trit)),
         }
     }
     pub fn default() -> Wire {

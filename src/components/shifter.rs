@@ -45,7 +45,7 @@ impl Shifter {
                 vec![
                     bus1.get_wire(i).clone(),
                     bus1.get_wire(WORD_SIZE - 1 - i).clone(),
-                ]
+                ],
             ));
         }
 
@@ -66,7 +66,7 @@ impl Shifter {
                     pre_inv[i].o_wire1().clone(),
                     link_shift_wires!(i, pre_inv, 1),
                     link_shift_wires!(i, pre_inv, 2),
-                ]
+                ],
             ));
             stage2.push(TritMux::new(
                 vec![c1.clone()],
@@ -85,10 +85,10 @@ impl Shifter {
                 vec![
                     stage2[i].o_wire1().clone(),
                     stage2[WORD_SIZE - 1 - i].o_wire1().clone(),
-                ]
+                ],
             ));
         }
-        
+
         let out = Bus::from_wires(
             post_inv
                 .iter()
@@ -152,11 +152,11 @@ impl UnaryBusOutputComponent for Shifter {
 #[cfg(test)]
 mod tests {
     use crate::components::platform::bus::Bus;
-    use crate::components::shifter::Shifter;
     use crate::components::platform::wire::{wire, write};
+    use crate::components::shifter::Shifter;
     use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
     use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
-    use crate::types::{Trit, Word, WORD_SIZE};
+    use crate::types::{Trit, WORD_SIZE, Word};
     use log::{debug, info};
 
     #[test]

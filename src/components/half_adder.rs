@@ -1,8 +1,8 @@
-use std::fmt::Debug;
+use crate::components::platform::binary_functions::{cons, sum};
 use crate::components::platform::wire::{Wire, read, wire, write};
 use crate::components::{BinaryWireOutputComponent, Component};
-use crate::components::platform::binary_functions::{cons, sum};
 use crate::types::Trit;
+use std::fmt::Debug;
 
 /// Half Adder component.
 /// - in1: a

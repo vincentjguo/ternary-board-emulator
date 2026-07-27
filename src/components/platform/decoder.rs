@@ -1,5 +1,5 @@
-use crate::components::{platform, Component};
-use crate::components::platform::wire::{read, write, Wire};
+use crate::components::platform::wire::{Wire, read, write};
+use crate::components::{Component, platform};
 use crate::types::Trit;
 
 /// A Decoder takes n select wires and an output signal wire, and produces 3^n output wires.
@@ -10,19 +10,20 @@ pub struct Decoder {
     select: Vec<Wire>,
     outputs: Vec<Wire>,
     out_sig: Wire,
-    bias: i32
+    bias: i32,
 }
 
 impl Decoder {
     pub fn new(select: Vec<Wire>, out_sig: Wire) -> Self {
         let outputs = (0..3_i32.pow(select.len() as u32))
-            .map(|_| Wire::new(Default::default())).collect();
-        let max_inputs =3usize.pow(select.len() as u32);
+            .map(|_| Wire::new(Default::default()))
+            .collect();
+        let max_inputs = 3usize.pow(select.len() as u32);
         Decoder {
             select,
             outputs,
             out_sig,
-            bias: max_inputs as i32 /2,
+            bias: max_inputs as i32 / 2,
         }
     }
 
@@ -58,11 +59,10 @@ impl std::fmt::Debug for Decoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::components::{Component};
+    use crate::components::Component;
 
     #[test]
     fn test_decoder() {
-
         let select = vec![
             crate::components::wire::wire(Trit::N),
             crate::components::wire::wire(Trit::Z),
@@ -81,11 +81,16 @@ mod tests {
                     let expected_idx = platform::selected_index(&decoder.select, decoder.bias);
                     for (j, output) in decoder.outputs.iter().enumerate() {
                         let expected = if j == expected_idx { out_trit } else { Trit::Z };
-                        assert_eq!(read(output), expected, "Failed at select {:?} (index {})", sel, i);
+                        assert_eq!(
+                            read(output),
+                            expected,
+                            "Failed at select {:?} (index {})",
+                            sel,
+                            i
+                        );
                     }
                 }
             }
         }
-
     }
 }

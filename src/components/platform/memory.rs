@@ -51,6 +51,15 @@ impl Memory {
         value[..WORD_SIZE].copy_from_slice(&self.data[addr..(WORD_SIZE + addr)]);
         self.data_out.write_word(&Word::from_trits(value));
     }
+
+    // initializes data for startup
+    pub fn init_data(&mut self, word: &Word, idx: usize) {
+        assert!(idx < MEMORY_SIZE);
+        assert_eq!(idx % WORD_SIZE, 0);
+        for (i, trit) in word.get_trits().iter().enumerate() {
+            self.data[idx + i].set_state(trit);
+        }
+    }
 }
 
 impl Component for Memory {

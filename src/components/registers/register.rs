@@ -1,6 +1,6 @@
-use crate::components::{Component, UnaryBusOutputComponent};
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::Wire;
+use crate::components::{Component, UnaryBusOutputComponent};
 use crate::types::{Trit, Word};
 
 /// A register that can hold a value and update it based on a control signal.
@@ -9,17 +9,16 @@ pub struct Register {
     name: String,
     d_out: Bus,
     d_in: Bus,
-    control: Wire
+    control: Wire,
 }
 
 impl Register {
     pub fn new(name: String, d_in: Bus, control: Wire) -> Self {
-
         Register {
             name,
             d_out: Bus::new(),
             d_in,
-            control
+            control,
         }
     }
 }
@@ -30,7 +29,7 @@ impl Component for Register {
         match control {
             Trit::Z => {
                 // Do nothing, keep the current value
-            },
+            }
             Trit::P | Trit::N => {
                 // Load the new value from d_in to d_out
                 let value = self.d_in.read_word();
@@ -59,13 +58,19 @@ impl std::fmt::Debug for Register {
     }
 }
 
+impl std::fmt::Display for Register {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.name, self.d_out.read_word())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::components::platform::bus::Bus;
-    use crate::components::platform::wire::{read, write, wire};
-    use crate::components::{Component, UnaryBusOutputComponent};
+    use crate::components::platform::wire::{read, wire, write};
     use crate::components::registers::register::Register;
+    use crate::components::{Component, UnaryBusOutputComponent};
     use crate::types::{Trit, Word};
 
     #[test]

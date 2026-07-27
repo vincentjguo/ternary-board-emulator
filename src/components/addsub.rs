@@ -1,12 +1,12 @@
-use std::fmt::{Debug, Display, Formatter};
 use crate::components::adder::Adder;
-use crate::components::platform::bus::Bus;
 use crate::components::negate::Negate;
-use crate::components::platform::wire::{Wire, wire, read};
+use crate::components::platform::bus::Bus;
+use crate::components::platform::wire::{Wire, read, wire};
 use crate::components::{
     BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent,
 };
 use crate::types::{Trit, WORD_SIZE};
+use std::fmt::{Debug, Display, Formatter};
 
 /// ALU component.
 /// - bus1: a (word aligned)
@@ -27,9 +27,8 @@ pub struct AddSub {
 
 impl AddSub {
     pub fn new(bus1: Bus, bus2: Bus, control: Wire) -> Self {
-        let negate: [Negate; WORD_SIZE] = std::array::from_fn(|i| {
-            Negate::new(bus2.get_wire(i).clone(), control.clone())
-        });
+        let negate: [Negate; WORD_SIZE] =
+            std::array::from_fn(|i| Negate::new(bus2.get_wire(i).clone(), control.clone()));
         let mut carry = wire(Trit::default());
         let mut adder: [Adder; WORD_SIZE] = std::array::from_fn(|i| {
             let reversed_i = WORD_SIZE - 1 - i;
@@ -100,13 +99,13 @@ impl Debug for AddSub {
 
 #[cfg(test)]
 mod tests {
+    use log::debug;
     use std::cmp::{max, min};
-    use log::{debug};
 
     use super::*;
-    use crate::components::platform::wire::{read};
+    use crate::components::platform::wire::read;
     use crate::conversions;
-    use crate::types::{Word, MAX_VALUE, MIN_VALUE};
+    use crate::types::{MAX_VALUE, MIN_VALUE, Word};
 
     struct AddSubTestCase {
         name: String,
@@ -184,10 +183,11 @@ mod tests {
         // We limit j to be within the min-max range so we don't generate the same overflow cases
         // We allow 2 overflow cases on either neg or pos side
         for i in [MIN_VALUE, MAX_VALUE, 0, -1, 1] {
-            for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
+            for j in max(MIN_VALUE, MIN_VALUE + i + 1)..min(MAX_VALUE, MAX_VALUE + i + 1) {
                 let a = conversions::convert_int_to_word(i);
                 let b = conversions::convert_int_to_word(j);
-                let expected_sum = conversions::convert_int_to_word((i + j).clamp(MIN_VALUE, MAX_VALUE));
+                let expected_sum =
+                    conversions::convert_int_to_word((i + j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i + j < MIN_VALUE {
                     Trit::N
                 } else if i + j > MAX_VALUE {
@@ -216,10 +216,11 @@ mod tests {
         let mut test_cases = vec![];
 
         for i in [MIN_VALUE, MAX_VALUE, 0, -1, 1] {
-            for j in max(MIN_VALUE, MIN_VALUE+i+1)..min(MAX_VALUE, MAX_VALUE+i+1) {
+            for j in max(MIN_VALUE, MIN_VALUE + i + 1)..min(MAX_VALUE, MAX_VALUE + i + 1) {
                 let a = conversions::convert_int_to_word(i);
                 let b = conversions::convert_int_to_word(j);
-                let expected_sum = conversions::convert_int_to_word((i - j).clamp(MIN_VALUE, MAX_VALUE));
+                let expected_sum =
+                    conversions::convert_int_to_word((i - j).clamp(MIN_VALUE, MAX_VALUE));
                 let expected_overflow = if i - j < MIN_VALUE {
                     Trit::N
                 } else if i - j > MAX_VALUE {

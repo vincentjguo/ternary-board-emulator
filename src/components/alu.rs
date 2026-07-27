@@ -1,11 +1,10 @@
-
+use crate::components::addsub::AddSub;
+use crate::components::fblock::FBlock;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::mux::Mux;
 use crate::components::shifter::Shifter;
 use crate::components::{Component, UnaryBusOutputComponent};
 use std::fmt::Debug;
-use crate::components::addsub::AddSub;
-use crate::components::fblock::FBlock;
 
 /// ALU (Arithmetic Logic Unit) that performs various operations based on control signals.
 ///
@@ -92,10 +91,10 @@ impl Debug for ALU {
 
 #[cfg(test)]
 mod tests {
+    use crate::components::alu::ALU;
     use crate::components::platform::bus::Bus;
     use crate::components::platform::wire::write;
     use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
-    use crate::components::alu::ALU;
     use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
     use crate::types::Trit;
 

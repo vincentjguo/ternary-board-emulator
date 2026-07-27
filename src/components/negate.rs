@@ -1,6 +1,6 @@
-use crate::components::platform::wire::{read, write, Wire};
-use crate::components::{Component, UnaryWireOutputComponent};
 use crate::components::platform::binary_functions::mult;
+use crate::components::platform::wire::{Wire, read, write};
+use crate::components::{Component, UnaryWireOutputComponent};
 use std::fmt::Debug;
 
 /// Negate component.
@@ -14,7 +14,11 @@ pub struct Negate {
 
 impl Negate {
     pub fn new(in1: Wire, control: Wire) -> Self {
-        Negate { in1, control, out: Wire::new(Default::default()) }
+        Negate {
+            in1,
+            control,
+            out: Wire::new(Default::default()),
+        }
     }
 }
 
@@ -22,7 +26,7 @@ impl Component for Negate {
     fn update(&mut self) {
         let a = read(&self.in1);
         let control = read(&self.control);
-        
+
         write(&self.out, &mult(&a, &control));
     }
 }

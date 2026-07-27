@@ -1,9 +1,9 @@
-use std::fmt::Debug;
 use crate::components::half_adder::HalfAdder;
-use crate::components::platform::wire::{read, wire, write, Wire};
-use crate::components::{BinaryWireOutputComponent, Component};
 use crate::components::platform::binary_functions::any;
+use crate::components::platform::wire::{Wire, read, wire, write};
+use crate::components::{BinaryWireOutputComponent, Component};
 use crate::types::Trit;
+use std::fmt::Debug;
 
 /// Full Adder component.
 /// - in1: a
@@ -46,7 +46,10 @@ impl Component for Adder {
         self.h_add_in.update();
         self.h_add_c_in.update();
 
-        let carry = any(&read(self.h_add_in.o_wire1()), &read(self.h_add_c_in.o_wire1()));
+        let carry = any(
+            &read(self.h_add_in.o_wire1()),
+            &read(self.h_add_c_in.o_wire1()),
+        );
         write(&self.c_out, &carry);
     }
 }

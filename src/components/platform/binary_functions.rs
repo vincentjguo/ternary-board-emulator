@@ -3,7 +3,6 @@ use std::cmp::{max, min};
 /// A binary function takes two trits as input and produces a single trit as output.
 pub type BinaryFunction = fn(&Trit, &Trit) -> Trit;
 
-
 // gates from https://louis-dr.github.io/ternalu3.html
 
 /// AND gate. The output is the minimum of the two input trits.
@@ -11,11 +10,20 @@ pub fn and(a: &Trit, b: &Trit) -> Trit {
     Trit::state(min(a.value(), b.value()))
 }
 
+/// NAND gate.
+pub fn nand(a: &Trit, b: &Trit) -> Trit {
+    -and(a, b)
+}
+
 /// OR gate. The output is the maximum of the two input trits.
 pub fn or(a: &Trit, b: &Trit) -> Trit {
     Trit::state(max(a.value(), b.value()))
 }
 
+/// NOR gate
+pub fn nor(a: &Trit, b: &Trit) -> Trit {
+    -or(a, b)
+}
 
 /// SUM gate
 pub fn sum(a: &Trit, b: &Trit) -> Trit {

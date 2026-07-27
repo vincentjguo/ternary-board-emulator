@@ -1,10 +1,14 @@
 use crate::components::platform::bus::Bus;
 use crate::components::platform::decoder::Decoder;
 use crate::components::platform::mux::Mux;
-use crate::components::platform::wire::{Wire, read};
+use crate::components::platform::wire::{Wire, read, write};
+use crate::components::registers::PC_REGISTER_INDEX;
 use crate::components::registers::register::Register;
-use crate::components::{BinaryBusOutputComponent, Component, UnaryBusOutputComponent};
-use crate::types::{Trit, WORD_SIZE, Word};
+use crate::components::{
+    BinaryBusOutputComponent, Component, IOComponent, UnaryBusOutputComponent,
+};
+use crate::conversions::convert_int_to_word;
+use crate::types::{Trit, WORD_SIZE};
 
 /// A register file with 4 registers, each of size WORD_SIZE
 /// Special Registers:
@@ -73,15 +77,44 @@ impl RegisterFile {
             data2_mux,
         }
     }
-}
 
-impl Component for RegisterFile {
-    fn update(&mut self) {
+    // immediately sets write_enable (preserving previous write_enable value) and writes to PC reg
+    // immediately reads from PC reg to o_bus1
+    pub fn update_and_read_pc(&mut self) {
+        // write to the program counter register (reg 7)
+        let old_write_enable = read(&self.write_enable);
+        self.write_enable.write(&Trit::P);
+        let pc = convert_int_to_word(PC_REGISTER_INDEX);
+        // select PC reg to write
+        self.reg_write_select[0].write(&pc[7]);
+        self.reg_write_select[1].write(&pc[8]);
+        self.write_data();
+        // select PC reg to read
+        self.reg1_select[0].write(&pc[7]);
+        self.reg1_select[1].write(&pc[8]);
+
+        self.update();
+        write(&self.write_enable, &old_write_enable);
+    }
+
+    pub fn write_data(&mut self) {
         // update write inputs first
         self.write_decoder.update();
 
         self.registers.iter_mut().for_each(Register::update);
+    }
 
+    pub fn dump_registers(&self) -> String {
+        let mut dump = String::new();
+        for reg in &self.registers {
+            dump.push_str(&format!("{reg}\n"));
+        }
+        dump
+    }
+}
+
+impl Component for RegisterFile {
+    fn update(&mut self) {
         // then update read muxes to reflect new register values
         self.data1_mux.update();
         self.data2_mux.update();
@@ -130,7 +163,7 @@ mod tests {
         write(&reg_write_select[1], &Trit::N);
         write(&write_enable, &Trit::P);
         write_data.write_word(&Word::state([1, 0, 0, 0, 0, 0, 0, 0, 0]));
-        reg_file.update();
+        reg_file.write_data();
 
         // Read from register 0
         write(&reg1_select[0], &Trit::N);
@@ -173,6 +206,7 @@ mod tests {
             let select_word = conversions::convert_int_to_unsigned_word(i as i32);
             write(&reg_write_select[0], select_word.get_trit(7));
             write(&reg_write_select[1], select_word.get_trit(8));
+            reg_file.write_data();
             reg_file.update();
         }
 
@@ -185,6 +219,7 @@ mod tests {
                 write(&reg1_select[1], select_word1.get_trit(8));
                 write(&reg2_select[0], select_word2.get_trit(7));
                 write(&reg2_select[1], select_word2.get_trit(8));
+                reg_file.write_data();
                 reg_file.update();
 
                 assert_eq!(

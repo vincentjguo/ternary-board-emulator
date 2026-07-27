@@ -1,12 +1,14 @@
 use crate::components::platform::bus::Bus;
-use crate::components::platform::wire::{read, write, Wire};
-use crate::components::{platform, BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent};
+use crate::components::platform::wire::{Wire, read, write};
+use crate::components::{
+    BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent,
+    platform,
+};
 use std::fmt::Debug;
-use crate::types::Trit;
 
 pub(crate) trait MuxSignal: Clone {
     fn copy_to_output(src: &Self, dst: &Self);
-    fn new () -> Self;
+    fn new() -> Self;
 }
 
 impl MuxSignal for Bus {
@@ -50,7 +52,7 @@ pub struct SelectMux<T: MuxSignal> {
 
 impl<T: MuxSignal> SelectMux<T> {
     pub fn new(select: Vec<Wire>, inputs: Vec<T>) -> Self {
-        let max_inputs =3usize.pow(select.len() as u32);
+        let max_inputs = 3usize.pow(select.len() as u32);
         assert!(
             max_inputs >= inputs.len(),
             "select lines ({}) do not cover all inputs ({})",
@@ -62,8 +64,12 @@ impl<T: MuxSignal> SelectMux<T> {
             select,
             inputs,
             output: T::new(),
-            bias: max_inputs as i32 /2,
+            bias: max_inputs as i32 / 2,
         }
+    }
+
+    pub fn set_output(&mut self, output: T) {
+        self.output = output;
     }
 }
 
@@ -99,7 +105,8 @@ pub type Mux = SelectMux<Bus>;
 impl UnaryBusOutputComponent for Mux {
     /// Output the selected input bus
     fn o_bus1(&self) -> &Bus {
-        &self.output }
+        &self.output
+    }
 }
 
 impl Debug for Mux {
@@ -117,7 +124,8 @@ impl Debug for Mux {
             "Mux {{ select: {:?}, idx: {}, output: {:?} }}",
             self.select.iter().map(read).collect::<Vec<_>>(),
             idx,
-            out )
+            out
+        )
     }
 }
 
@@ -144,7 +152,8 @@ impl Debug for TritMux {
             f,
             "TritMux {{ select: {:?}, output: {:?} }}",
             self.select.iter().map(read).collect::<Vec<_>>(),
-            out )
+            out
+        )
     }
 }
 
@@ -154,7 +163,9 @@ impl BinaryWireOutputComponent for BinaryTritMux {
     fn o_wire1(&self) -> &Wire {
         &self.output[0]
     }
-    fn o_wire2(&self) -> &Wire {&self.output[1]}
+    fn o_wire2(&self) -> &Wire {
+        &self.output[1]
+    }
 }
 
 impl Debug for BinaryTritMux {
@@ -167,7 +178,8 @@ impl Debug for BinaryTritMux {
             "TritMux {{ select: {:?}, idx: {} output: {:?} }}",
             self.select.iter().map(read).collect::<Vec<_>>(),
             idx,
-            out )
+            out
+        )
     }
 }
 
@@ -177,7 +189,7 @@ pub type LazyMux = Mux;
 
 impl LazyMux {
     pub fn set_inputs(&mut self, inputs: Vec<Bus>) {
-        let max_inputs =3usize.pow(self.select.len() as u32);
+        let max_inputs = 3usize.pow(self.select.len() as u32);
         assert!(
             max_inputs >= inputs.len(),
             "select lines ({}) do not cover all inputs ({})",

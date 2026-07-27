@@ -1,9 +1,9 @@
+use crate::components::UnaryBusOutputComponent;
 use crate::components::platform::binary_functions::{and, any, cons, or, sum, xor};
 use crate::components::platform::binary_gate::BinaryGate;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::mux::Mux;
 use crate::components::platform::wire::Wire;
-use crate::components::UnaryBusOutputComponent;
 use crate::types::Trit;
 use std::fmt::Debug;
 
@@ -29,16 +29,9 @@ impl FBlock {
         let mut mux_inputs = Vec::new();
 
         for func in FUNCTIONS.iter() {
-            let output = Bus::new();
-            let gate = BinaryGate::new(
-                format!("{:?}", func),
-                in1.clone(),
-                in2.clone(),
-                *func,
-                output.clone(),
-            );
+            let gate = BinaryGate::new(format!("{:?}", func), in1.clone(), in2.clone(), *func);
+            mux_inputs.push(gate.o_bus1().clone());
             functions.push(gate);
-            mux_inputs.push(output);
         }
 
         let mux = Mux::new(select.to_vec(), mux_inputs);
@@ -104,11 +97,7 @@ mod tests {
         let s0 = Wire::default();
         let s1 = Wire::default();
 
-        let mut fblock = FBlock::new(
-            in1.clone(),
-            in2.clone(),
-            [s0.clone(), s1.clone()],
-        );
+        let mut fblock = FBlock::new(in1.clone(), in2.clone(), [s0.clone(), s1.clone()]);
 
         let trits = [Trit::N, Trit::Z, Trit::P];
 

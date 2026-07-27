@@ -1,3 +1,5 @@
+use std::ops::Neg;
+
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub enum Trit {
     N = -1,
@@ -27,6 +29,12 @@ impl Trit {
     }
 }
 
+impl Neg for Trit {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Trit::state(-self.value())
+    }
+}
 
 impl std::fmt::Debug for Trit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

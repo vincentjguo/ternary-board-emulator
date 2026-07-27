@@ -1,5 +1,5 @@
 use crate::components::platform::bus::Bus;
-use crate::components::platform::wire::{write, Wire};
+use crate::components::platform::wire::{Wire, write};
 use crate::types::Trit;
 
 /// # Instruction Set Architecture
@@ -38,7 +38,7 @@ use crate::types::Trit;
 /// Register encoding: `ooossttdd`
 ///
 /// Immediate encoding: `ooossttii`
-/// 
+///
 /// Load high encoding: `ooiiiiidd`
 ///
 /// Load low encoding: `oooiiiidd`
@@ -96,7 +96,7 @@ pub struct OpcodeDecoder {
     pub jump: Wire,
 
     /// Trap: `+` if the instruction is a trap instruction (for trap) // TODO: have syscalls use a different signal to differentiate?
-    pub trap: Wire
+    pub trap: Wire,
 }
 
 impl OpcodeDecoder {
@@ -112,7 +112,7 @@ impl OpcodeDecoder {
             branch: Wire::default(),
             alu_src: Wire::default(),
             jump: Wire::default(),
-            trap: Wire::default()
+            trap: Wire::default(),
         }
     }
 
@@ -147,10 +147,11 @@ impl OpcodeDecoder {
     }
 
     fn set_addsub_control_sum(&self, subtract: bool) {
-        self.alu_control.write_trit(0, if subtract { Trit::N } else { Trit::P });
+        self.alu_control
+            .write_trit(0, if subtract { Trit::N } else { Trit::P });
         self.alu_control.write_trit(4, Trit::N);
     }
-    
+
     fn set_addsub_control_mult(&self) {
         self.alu_control.write_trit(1, Trit::P);
         self.alu_control.write_trit(2, Trit::P);
@@ -164,7 +165,8 @@ impl OpcodeDecoder {
     }
 
     fn set_shift_control(&self, left_shift: bool) {
-        self.alu_control.write_trit(3, if left_shift { Trit::N } else { Trit::Z });
+        self.alu_control
+            .write_trit(3, if left_shift { Trit::N } else { Trit::Z });
         self.alu_control.write_trit(4, Trit::P);
     }
 }
@@ -305,7 +307,6 @@ impl crate::components::Component for OpcodeDecoder {
                 write(&self.alu_src, &Trit::P);
                 self.set_addsub_control_sum(false);
             }
-
 
             // lh: load high format; passthrough alu and write to high 5 trits of register
             (Trit::P, Trit::P, _) => {

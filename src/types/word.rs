@@ -1,13 +1,12 @@
-use std::fmt::Display;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::Wire;
 use crate::types::Trit;
 use crate::types::WORD_SIZE;
+use std::fmt::Display;
 
 /// A Word is a fixed-size array of 9 Trits or 3 Trytes, representing a unit of data in the system.
 /// 0 index is the most significant trit
-#[derive(Debug, Clone)]
-#[derive(PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Word {
     trits: [Trit; WORD_SIZE],
 }
@@ -42,7 +41,6 @@ impl Word {
     }
 }
 
-
 impl<Idx> std::ops::Index<Idx> for Word
 where
     Idx: std::slice::SliceIndex<[Trit]>,
@@ -55,15 +53,26 @@ where
 }
 
 impl FromIterator<Trit> for Word {
-    fn from_iter<I: IntoIterator<Item=Trit>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = Trit>>(iter: I) -> Self {
         let trits: Vec<Trit> = iter.into_iter().collect();
-        let trits: [Trit; WORD_SIZE] = trits.try_into()
+        let trits: [Trit; WORD_SIZE] = trits
+            .try_into()
             .expect("Word::from_iter expected WORD_SIZE trits");
 
         Word { trits }
     }
 }
 
+impl FromIterator<i8> for Word {
+    fn from_iter<I: IntoIterator<Item = i8>>(iter: I) -> Self {
+        let trits: Vec<Trit> = iter.into_iter().map(|v| Trit::state(v)).collect();
+        let trits: [Trit; WORD_SIZE] = trits
+            .try_into()
+            .expect("Word::from_iter expected WORD_SIZE trits");
+
+        Word { trits }
+    }
+}
 
 impl Display for Word {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -1,17 +1,18 @@
 use platform::{bus, wire};
 
 pub mod adder;
+pub mod addsub;
+pub mod alu;
+pub mod detect_zero;
+pub mod fblock;
 mod half_adder;
+pub mod immediate_extend;
 mod negate;
-pub mod shifter;
 pub mod opcode_decoder;
 pub mod platform;
 pub mod registers;
+pub mod shifter;
 pub mod trap;
-pub mod addsub;
-pub mod fblock;
-pub mod alu;
-pub mod immediate_extend;
 
 pub trait Component {
     /// read from wires and compute outputs
@@ -40,4 +41,3 @@ pub trait UnaryWireOutputComponent: Component {
 pub trait UnaryBusOutputComponent: Component {
     fn o_bus1(&self) -> &bus::Bus;
 }
-

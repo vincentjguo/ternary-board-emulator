@@ -46,7 +46,6 @@ impl Bus {
     }
 }
 
-
 impl<Idx> std::ops::Index<Idx> for Bus
 where
     Idx: std::slice::SliceIndex<[Wire]>,
@@ -55,6 +54,14 @@ where
 
     fn index(&self, index: Idx) -> &Self::Output {
         &(&self.0[..])[index]
+    }
+}
+
+impl IntoIterator for &Bus {
+    type Item = Trit;
+    type IntoIter = std::array::IntoIter<Self::Item, WORD_SIZE>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.clone().map(|x| read(&x)).into_iter()
     }
 }
 
