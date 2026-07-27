@@ -1,5 +1,3 @@
-use crate::components::platform::bus::Bus;
-use crate::components::platform::wire::Wire;
 use crate::types::Trit;
 use crate::types::WORD_SIZE;
 use std::fmt::Display;

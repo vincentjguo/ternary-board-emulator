@@ -1,7 +1,7 @@
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::Wire;
 use crate::components::{Component, UnaryBusOutputComponent};
-use crate::types::{Trit, Word};
+use crate::types::Trit;
 
 /// A register that can hold a value and update it based on a control signal.
 /// When the control signal is non-zero, the register loads the value from d_in to d_out.

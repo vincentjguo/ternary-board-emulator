@@ -3,18 +3,24 @@ mod conversions;
 pub mod emulator;
 mod types;
 
-use crate::conversions::{convert_int_to_unsigned_word, convert_int_to_word};
+use crate::conversions::convert_int_to_word;
 use crate::emulator::Emulator;
 use crate::types::{Trit, Word};
 
 fn reg_field(index: i32) -> [Trit; 2] {
-    let word = convert_int_to_unsigned_word(index);
+    // Register selectors are signed ternary in this ISA: 0..4 are general-purpose registers,
+    // while negative values map to the special registers.
+    let word = convert_int_to_word(index);
     [*word.get_trit(7), *word.get_trit(8)]
 }
 
 fn imm_field(value: i32) -> [Trit; 2] {
-    let word = convert_int_to_word(value);
-    [*word.get_trit(7), *word.get_trit(8)]
+    match value {
+        -1 => [Trit::Z, Trit::N],
+        0 => [Trit::Z, Trit::Z],
+        1 => [Trit::Z, Trit::P],
+        other => panic!("unsupported immediate value {other}; this demo only needs -1, 0, or 1"),
+    }
 }
 
 fn encode_addi(dst: i32, src: i32, imm: i32) -> Word {

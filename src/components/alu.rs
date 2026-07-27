@@ -5,6 +5,7 @@ use crate::components::platform::mux::Mux;
 use crate::components::shifter::Shifter;
 use crate::components::{Component, UnaryBusOutputComponent};
 use std::fmt::Debug;
+use log::debug;
 
 /// ALU (Arithmetic Logic Unit) that performs various operations based on control signals.
 ///
@@ -70,6 +71,7 @@ impl Component for ALU {
         self.fblock.update();
         self.shifter.update();
         self.mux.update();
+        debug!("{:?}", self)
     }
 }
 

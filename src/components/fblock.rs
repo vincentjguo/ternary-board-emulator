@@ -64,7 +64,7 @@ impl UnaryBusOutputComponent for FBlock {
 
 impl Debug for FBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let select_values: Vec<Trit> = self
+        let _select_values: Vec<Trit> = self
             .select
             .iter()
             .map(crate::components::wire::read)

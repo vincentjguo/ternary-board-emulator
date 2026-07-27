@@ -1,12 +1,12 @@
 use crate::components::adder::Adder;
 use crate::components::negate::Negate;
 use crate::components::platform::bus::Bus;
-use crate::components::platform::wire::{Wire, read, wire};
+use crate::components::platform::wire::{Wire, wire};
 use crate::components::{
     BinaryWireOutputComponent, Component, UnaryBusOutputComponent, UnaryWireOutputComponent,
 };
 use crate::types::{Trit, WORD_SIZE};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 
 /// ALU component.
 /// - bus1: a (word aligned)

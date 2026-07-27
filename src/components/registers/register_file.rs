@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+use log::debug;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::decoder::Decoder;
 use crate::components::platform::mux::Mux;
@@ -107,7 +109,10 @@ impl RegisterFile {
     pub fn dump_registers(&self) -> String {
         let mut dump = String::new();
         for reg in &self.registers {
-            dump.push_str(&format!("{reg}\n"));
+            dump.push_str(&format!(
+                "{reg} ({})\n",
+                crate::conversions::convert_word_to_int(&reg.o_bus1().read_word())
+            ));
         }
         dump
     }
@@ -118,6 +123,13 @@ impl Component for RegisterFile {
         // then update read muxes to reflect new register values
         self.data1_mux.update();
         self.data2_mux.update();
+        debug!("{:?}", self)
+    }
+}
+
+impl Debug for RegisterFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ reg1_select: {:?}, reg2_select: {:?}, read_data1: {:?}, read_data2: {:?} }}", self.reg1_select, self.reg2_select, self.read_data1.read_word(), self.read_data2.read_word())
     }
 }
 

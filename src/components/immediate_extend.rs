@@ -1,10 +1,9 @@
 use crate::components::platform::bus::Bus;
 use crate::components::platform::wire::{Wire, read};
-use crate::components::{Component, IOComponent, UnaryBusOutputComponent};
+use crate::components::{Component, UnaryBusOutputComponent};
 use crate::types::{Trit, Word};
 
 /// Extends immediates depending on the encoding
-///
 pub struct ImmediateExtend {
     jump_sig: Wire,
     load_sig: Wire,

@@ -52,6 +52,11 @@ impl Memory {
         self.data_out.write_word(&Word::from_trits(value));
     }
 
+    /// Reads the current instruction word into the output bus without consulting the memory control line.
+    pub fn fetch_instruction(&mut self) {
+        self.read();
+    }
+
     // initializes data for startup
     pub fn init_data(&mut self, word: &Word, idx: usize) {
         assert!(idx < MEMORY_SIZE);

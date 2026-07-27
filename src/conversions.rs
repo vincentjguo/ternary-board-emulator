@@ -10,7 +10,7 @@ pub fn convert_int_to_unbalanced(value: i32) -> Vec<i8> {
         trits.push((biased % 3) as i8);
         biased /= 3;
     }
-    for i in trits.len()..WORD_SIZE {
+    for _i in trits.len()..WORD_SIZE {
         trits.push(0);
     }
     trits.reverse(); // take the 0th index as the most significant trit
@@ -67,7 +67,7 @@ pub fn convert_int_to_unbiased_unbalanced(value: i32) -> Vec<i8> {
         trits.push((val % 3) as i8);
         val /= 3;
     }
-    for i in trits.len()..WORD_SIZE {
+    for _i in trits.len()..WORD_SIZE {
         trits.push(0);
     }
     trits.reverse(); // take the 0th index as the most significant trit

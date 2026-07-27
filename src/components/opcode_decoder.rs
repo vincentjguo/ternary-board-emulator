@@ -121,7 +121,7 @@ impl OpcodeDecoder {
         write(&self.load_immediate, &Trit::Z);
         write(&self.mem_control, &Trit::Z);
         write(&self.branch, &Trit::Z);
-        write(&self.alu_src, &Trit::Z);
+        write(&self.alu_src, &Trit::N);
         write(&self.jump, &Trit::Z);
         write(&self.trap, &Trit::Z);
 
@@ -132,10 +132,10 @@ impl OpcodeDecoder {
 
     /// sets instruction to register format
     /// - reg_dst = P
-    /// - alu_src = Z
+    /// - alu_src = N
     fn set_register_format(&self) {
         write(&self.reg_dst, &Trit::P);
-        write(&self.alu_src, &Trit::Z);
+        write(&self.alu_src, &Trit::N);
     }
 
     /// sets instruction to immediate format

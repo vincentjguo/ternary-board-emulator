@@ -3,8 +3,8 @@ use crate::components::alu::ALU;
 use crate::components::detect_zero::DetectZero;
 use crate::components::immediate_extend::ImmediateExtend;
 use crate::components::opcode_decoder::OpcodeDecoder;
-use crate::components::platform::binary_functions::{BinaryFunction, cons};
-use crate::components::platform::binary_gate::{BinaryGate, BinaryTritGate};
+use crate::components::platform::binary_functions::cons;
+use crate::components::platform::binary_gate::BinaryTritGate;
 use crate::components::platform::bus::Bus;
 use crate::components::platform::memory::Memory;
 use crate::components::platform::mux::{BinaryTritMux, LazyMux, Mux};
@@ -16,7 +16,7 @@ use crate::components::{
     UnaryWireOutputComponent,
 };
 use crate::types::Trit;
-use log::warn;
+use log::{debug, warn};
 
 pub struct Emulator {
     // memory
@@ -93,7 +93,11 @@ impl Emulator {
 
         let alu_src_mux = Mux::new(
             vec![control.alu_src.clone()],
-            vec![register.o_bus2().clone(), immediate_extend.o_bus1().clone()],
+            vec![
+                register.o_bus2().clone(),
+                Bus::new(),
+                immediate_extend.o_bus1().clone(),
+            ],
         );
 
         let alu = ALU::new(
@@ -144,7 +148,11 @@ impl Emulator {
 
         let mut branch_select_mux: Mux = Mux::new(
             vec![branch_cond_gate.o_wire1().clone()],
-            vec![pc_inc.o_bus1().clone(), branch_inc.o_bus1().clone()],
+            vec![
+                branch_inc.o_bus1().clone(),
+                pc_inc.o_bus1().clone(),
+                branch_inc.o_bus1().clone(),
+            ],
         );
         branch_select_mux.set_output(write_data_mux.o_bus1().clone());
         // let pc = ProgramCounter::new(
@@ -181,8 +189,18 @@ impl Emulator {
         loop {
             self.register.update_and_read_pc();
 
-            // read and decode instruction memory
-            self.memory.update();
+            // fetch and decode instruction memory
+            self.memory.fetch_instruction();
+
+            if std::env::var("DEBUG").is_ok() {
+                let pc_word = self.register.o_bus1().read_word();
+                let instr = self.memory.o_bus1().read_word();
+                debug!(
+                    "cycle pc={} instr={}",
+                    crate::conversions::convert_word_to_int(&pc_word),
+                    instr
+                );
+            }
 
             // TODO: actually have a trap instruction for shutdown
             if self.memory.o_bus1().read_word()
@@ -193,6 +211,7 @@ impl Emulator {
             }
 
             self.control.update();
+            self.pc_inc.update();
 
             // read register file
             self.primary_reg_mux.update();
@@ -209,11 +228,14 @@ impl Emulator {
             self.write_data_mux.update();
             self.register.write_data();
 
-            self.pc_inc.update();
             self.branch_shift.update();
             self.branch_inc.update();
             self.branch_cond_gate.update();
             self.branch_select_mux.update();
+
+            if std::env::var("DEBUG_DEMO").is_ok() {
+                println!("{}", self.dump_registers());
+            }
         }
     }
 
