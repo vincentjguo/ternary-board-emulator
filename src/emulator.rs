@@ -249,3 +249,11 @@ impl Emulator {
         self.register.dump_registers()
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//
+//     #[test]
+//
+// }

@@ -158,9 +158,9 @@ impl OpcodeDecoder {
         self.alu_control.write_trit(4, Trit::Z);
     }
 
-    fn set_fblock_control(&self, select_low: Trit, select_high: Trit) {
-        self.alu_control.write_trit(1, select_low);
-        self.alu_control.write_trit(2, select_high);
+    fn set_fblock_control(&self, select_high: Trit, select_low: Trit) {
+        self.alu_control.write_trit(1, select_high);
+        self.alu_control.write_trit(2, select_low);
         self.alu_control.write_trit(4, Trit::Z);
     }
 
@@ -200,19 +200,19 @@ impl crate::components::Component for OpcodeDecoder {
             // or: register format
             (Trit::Z, Trit::N, Trit::Z) => {
                 self.set_register_format();
-                self.set_fblock_control(Trit::Z, Trit::N);
+                self.set_fblock_control(Trit::N, Trit::Z);
                 write(&self.reg_write, &Trit::P);
             }
             // cons: register format
             (Trit::Z, Trit::P, Trit::N) => {
                 self.set_register_format();
-                self.set_fblock_control(Trit::P, Trit::N);
+                self.set_fblock_control(Trit::N, Trit::P);
                 write(&self.reg_write, &Trit::P);
             }
             // any: register format
             (Trit::Z, Trit::N, Trit::N) => {
                 self.set_register_format();
-                self.set_fblock_control(Trit::N, Trit::Z);
+                self.set_fblock_control(Trit::Z, Trit::N);
                 write(&self.reg_write, &Trit::P);
             }
             // sum: register format
@@ -224,7 +224,7 @@ impl crate::components::Component for OpcodeDecoder {
             // xor: register format
             (Trit::P, Trit::Z, Trit::N) => {
                 self.set_register_format();
-                self.set_fblock_control(Trit::P, Trit::Z);
+                self.set_fblock_control(Trit::Z, Trit::P);
                 write(&self.reg_write, &Trit::P);
             }
             // beq: register format
@@ -272,7 +272,7 @@ impl crate::components::Component for OpcodeDecoder {
             // ori: immediate format
             (Trit::Z, Trit::N, Trit::P) => {
                 self.set_immediate_format();
-                self.set_fblock_control(Trit::Z, Trit::N);
+                self.set_fblock_control(Trit::N, Trit::Z);
                 write(&self.reg_write, &Trit::P);
             }
             // sll: immediate format
@@ -337,3 +337,5 @@ impl crate::components::Component for OpcodeDecoder {
         }
     }
 }
+
+// TODO: Writes tests

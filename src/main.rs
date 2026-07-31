@@ -1,67 +1,11 @@
 mod components;
 mod conversions;
+pub mod encoders;
 pub mod emulator;
 mod types;
 
-use crate::conversions::convert_int_to_word;
+use crate::encoders::{encode_add, encode_addi, encode_empty};
 use crate::emulator::Emulator;
-use crate::types::{Trit, Word};
-
-fn reg_field(index: i32) -> [Trit; 2] {
-    // Register selectors are signed ternary in this ISA: 0..4 are general-purpose registers,
-    // while negative values map to the special registers.
-    let word = convert_int_to_word(index);
-    [*word.get_trit(7), *word.get_trit(8)]
-}
-
-fn imm_field(value: i32) -> [Trit; 2] {
-    match value {
-        -1 => [Trit::Z, Trit::N],
-        0 => [Trit::Z, Trit::Z],
-        1 => [Trit::Z, Trit::P],
-        other => panic!("unsupported immediate value {other}; this demo only needs -1, 0, or 1"),
-    }
-}
-
-fn encode_addi(dst: i32, src: i32, imm: i32) -> Word {
-    let s = reg_field(src);
-    let t = reg_field(dst);
-    let i = imm_field(imm);
-
-    Word::from_trits([
-        Trit::P,
-        Trit::Z,
-        Trit::P,
-        s[0],
-        s[1],
-        t[0],
-        t[1],
-        i[0],
-        i[1],
-    ])
-}
-
-fn encode_add(dst: i32, src_a: i32, src_b: i32) -> Word {
-    let s = reg_field(src_a);
-    let t = reg_field(src_b);
-    let d = reg_field(dst);
-
-    Word::from_trits([
-        Trit::P,
-        Trit::Z,
-        Trit::Z,
-        s[0],
-        s[1],
-        t[0],
-        t[1],
-        d[0],
-        d[1],
-    ])
-}
-
-fn encode_empty() -> Word {
-    Word::from_trits([Trit::Z; 9])
-}
 
 fn main() {
     pretty_env_logger::init();
